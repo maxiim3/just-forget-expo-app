@@ -14,36 +14,39 @@
 - [x] Configure fonts (Caveat / Permanent Marker)
 - [x] Setup Expo Router file structure
 
-## Phase 2: Core UI
+## Phase 2: Core UI ✅
 
-- [ ] Create Card component (title, body, actions)
-- [ ] Create CardStack component with swipe gestures
-- [ ] Implement swipe right (scroll to next)
-- [ ] Implement swipe left (archive)
-- [ ] Implement swipe up/down (edit)
-- [ ] Create bottom capture zone (drag up to create)
+- [x] Create Card component (SwipeCard.tsx)
+- [x] Create CardStack component with swipe gestures
+- [x] Implement swipe right (keep/next)
+- [x] Implement swipe left (archive)
+- [x] Implement swipe up/down (edit modal)
+- [x] Create bottom capture zone (BottomDrawer + edge gesture)
+- [x] Apply hand-drawn aesthetic (borders, fonts, colors)
+- [x] Create Grid view
+- [x] 12 mock entries for testing
+- [x] PWA support (manifest + service worker)
 - [ ] Create Settings drawer
-- [ ] Apply hand-drawn aesthetic (borders, fonts, colors)
 
 ## Phase 3: Capture Flow
 
-- [ ] Create text input capture modal
+- [x] Create text input capture modal (BottomDrawer)
 - [ ] Implement voice recording (MediaRecorder for web)
 - [ ] Save entries to Supabase
-- [ ] Display entries in card stack
+- [x] Display entries in card stack
 
 ## Phase 4: Data & Sync
 
 - [ ] Create Supabase schema (entries, labels, entry_labels)
 - [ ] Implement CRUD operations
-- [ ] Implement archive functionality
+- [x] Implement archive functionality
 - [ ] Add sort options (A-Z, modified date)
 - [x] Setup Zustand store for local state
 
 ## Phase 5: Polish
 
-- [ ] Add Grid view toggle
+- [x] Add Grid view toggle
 - [ ] Persist settings to storage
 - [ ] Add loading states
 - [ ] Add error handling
-- [ ] Empty state ("Nothing here. Go live.")
+- [x] Empty state ("All clear!")
