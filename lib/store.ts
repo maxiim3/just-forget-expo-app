@@ -1,0 +1,57 @@
+import { create } from "zustand";
+import type { Entry } from "./supabase";
+
+type ViewMode = "stack" | "grid";
+type SortMode = "modified" | "alphabetical";
+
+interface AppState {
+  // Entries
+  entries: Entry[];
+  setEntries: (entries: Entry[]) => void;
+  addEntry: (entry: Entry) => void;
+  updateEntry: (id: string, updates: Partial<Entry>) => void;
+  archiveEntry: (id: string) => void;
+
+  // View settings
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
+  sortMode: SortMode;
+  setSortMode: (mode: SortMode) => void;
+
+  // UI state
+  isCapturing: boolean;
+  setIsCapturing: (value: boolean) => void;
+  currentCardIndex: number;
+  setCurrentCardIndex: (index: number) => void;
+}
+
+export const useAppStore = create<AppState>((set) => ({
+  // Entries
+  entries: [],
+  setEntries: (entries) => set({ entries }),
+  addEntry: (entry) => set((state) => ({ entries: [entry, ...state.entries] })),
+  updateEntry: (id, updates) =>
+    set((state) => ({
+      entries: state.entries.map((e) =>
+        e.id === id ? { ...e, ...updates } : e
+      ),
+    })),
+  archiveEntry: (id) =>
+    set((state) => ({
+      entries: state.entries.map((e) =>
+        e.id === id ? { ...e, archived: true } : e
+      ),
+    })),
+
+  // View settings
+  viewMode: "stack",
+  setViewMode: (mode) => set({ viewMode: mode }),
+  sortMode: "modified",
+  setSortMode: (mode) => set({ sortMode: mode }),
+
+  // UI state
+  isCapturing: false,
+  setIsCapturing: (value) => set({ isCapturing: value }),
+  currentCardIndex: 0,
+  setCurrentCardIndex: (index) => set({ currentCardIndex: index }),
+}));
