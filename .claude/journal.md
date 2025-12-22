@@ -1,5 +1,23 @@
 # Forget App - Development Journal
 
+## 2025-12-22 - Fix Stack Orientation
+
+### Session Summary
+Fixed card stack orientation to match mockup design.
+
+### What Was Changed
+- Stack now shows cards peeking from the **top** instead of bottom
+- Inverted `stackOffsetY` to negative value in `GestureCard.tsx`
+- Adjusted theme constants: `stackOffset: 16`, `stackScale: 0.97`
+
+### Files Modified
+```
+/constants/theme.ts              (stackOffset, stackScale values)
+/components/cards/GestureCard.tsx (negative stackOffsetY)
+```
+
+---
+
 ## 2025-12-22 - Enhanced StackUI (Issue #3)
 
 ### Session Summary
