@@ -129,7 +129,7 @@ export function GestureCard({
 
   const animatedCardStyle = useAnimatedStyle(() => {
     // Stack depth visualization for non-active cards
-    const stackOffsetY = stackPosition * cardDimensions.stackOffset;
+    const stackOffsetY = -stackPosition * cardDimensions.stackOffset;
     const stackScale = Math.pow(cardDimensions.stackScale, stackPosition);
     // Smooth exponential fade for 10 visible cards (never fully disappear)
     const stackOpacity = Math.pow(cardDimensions.opacityBase, stackPosition);

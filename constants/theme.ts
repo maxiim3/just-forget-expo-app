@@ -42,8 +42,8 @@ export const borderWidth = {
 export const cardDimensions = {
   width: 320,
   height: 420,
-  stackOffset: 8,
-  stackScale: 0.95,
+  stackOffset: 16,
+  stackScale: 0.97,
   // Stack visibility
   maxVisibleCards: 10,
   opacityBase: 0.88,
