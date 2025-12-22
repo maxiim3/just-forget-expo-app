@@ -9,5 +9,10 @@
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "dropbox",
+    "raindrop"
+  ],
+  "enableAllProjectMcpServers": true
 }

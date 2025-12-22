@@ -13,6 +13,13 @@ interface AppState {
   archiveEntry: (id: string) => void;
   deleteEntry: (id: string) => void;
 
+  // Selection (multi-select)
+  selectedEntryIds: Set<string>;
+  toggleSelectedEntry: (id: string) => void;
+  clearSelection: () => void;
+  archiveSelected: () => void;
+  deleteSelected: () => void;
+
   // View settings
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
@@ -50,6 +57,32 @@ export const useAppStore = create<AppState>((set) => ({
   deleteEntry: (id) =>
     set((state) => ({
       entries: state.entries.filter((e) => e.id !== id),
+    })),
+
+  // Selection (multi-select)
+  selectedEntryIds: new Set(),
+  toggleSelectedEntry: (id) =>
+    set((state) => {
+      const newSet = new Set(state.selectedEntryIds);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return { selectedEntryIds: newSet };
+    }),
+  clearSelection: () => set({ selectedEntryIds: new Set() }),
+  archiveSelected: () =>
+    set((state) => ({
+      entries: state.entries.map((e) =>
+        state.selectedEntryIds.has(e.id) ? { ...e, archived: true } : e
+      ),
+      selectedEntryIds: new Set(),
+    })),
+  deleteSelected: () =>
+    set((state) => ({
+      entries: state.entries.filter((e) => !state.selectedEntryIds.has(e.id)),
+      selectedEntryIds: new Set(),
     })),
 
   // View settings

@@ -4,6 +4,7 @@ import { cardDimensions } from "@/constants/theme";
 
 interface SwipeCardProps {
   entry: Entry;
+  isSelected?: boolean;
 }
 
 // Format relative time
@@ -31,18 +32,27 @@ const getContentType = (content: string): "link" | "list" | "note" => {
   return "note";
 };
 
-export function SwipeCard({ entry }: SwipeCardProps) {
+export function SwipeCard({ entry, isSelected = false }: SwipeCardProps) {
   const contentType = getContentType(entry.content);
   const relativeTime = formatRelativeTime(entry.updated_at);
 
   return (
     <View
-      className="bg-surface border-4 border-primary rounded-sketch p-6 shadow-lg"
+      className={`bg-surface border-4 rounded-sketch p-6 shadow-lg ${
+        isSelected ? "border-accent" : "border-primary"
+      }`}
       style={{
         width: cardDimensions.width,
         height: cardDimensions.height,
       }}
     >
+      {/* Selection indicator */}
+      {isSelected && (
+        <View className="absolute top-4 right-4 w-8 h-8 bg-accent rounded-full items-center justify-center z-10">
+          <Text className="text-white text-lg">✓</Text>
+        </View>
+      )}
+
       {/* Content type indicator */}
       <View className="flex-row items-center mb-4">
         <View
@@ -73,12 +83,6 @@ export function SwipeCard({ entry }: SwipeCardProps) {
         </Text>
       </View>
 
-      {/* Bottom hint */}
-      <View className="mt-4 pt-4 border-t-2 border-muted">
-        <Text className="font-caveat text-secondary text-center text-base">
-          ← keep · actions →
-        </Text>
-      </View>
     </View>
   );
 }
