@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Enhanced StackUI** (Issue #3): Improved card stack visualization
+  - Extended visible cards from 4 to 10 with smooth exponential fade
+  - Added `PassedCardsStack` component showing the last swiped card at bottom
+  - Swipe up on bottom card to navigate back (previous)
+  - Full card reveals when dragging up from bottom
+  - New theme constants: `maxVisibleCards`, `opacityBase`, `passedCardHeadHeight`
+
 - **GestureCard Component**: New gesture-based card interaction system
   - Long-press to select cards for batch operations
   - Selection action bar with archive/delete actions
