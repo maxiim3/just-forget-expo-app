@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **GestureCard Component**: New gesture-based card interaction system
+  - Long-press to select cards for batch operations
+  - Selection action bar with archive/delete actions
+  - Visual selection state with checkmark indicator
+
+- **SelectionActionBar Component**: Action bar for multi-card selection
+  - Archive and delete actions for selected cards
+  - Selection count display
+
+- **PWA Maskable Icons**: Added complete set of maskable icons for better PWA experience
+  - Added icons in sizes: 48px, 72px, 96px, 128px, 192px, 384px, 512px
+  - Updated manifest.json with maskable icon definitions
+
+- **Store Enhancements**: Extended Zustand store for selection management
+  - Added `selectedIds` state for tracking selected entries
+  - Added `toggleSelection`, `clearSelection`, `archiveSelected`, `deleteSelected` actions
+
+### Changed
+
+- **CardStack Component**: Refactored gesture handling and improved card transitions
+- **SwipeCard Component**: Enhanced visual feedback and gesture responsiveness
+
 - **Capture Screen**: Implemented swipe card stack with gesture-based interactions
   - CardStack component for browsing entries via swipe gestures
   - SwipeCard component with swipe-right (next), swipe-left (archive), swipe-up/down (edit) actions

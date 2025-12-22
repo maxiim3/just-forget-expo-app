@@ -11,6 +11,14 @@ interface AppState {
   addEntry: (entry: Entry) => void;
   updateEntry: (id: string, updates: Partial<Entry>) => void;
   archiveEntry: (id: string) => void;
+  deleteEntry: (id: string) => void;
+
+  // Selection (multi-select)
+  selectedEntryIds: Set<string>;
+  toggleSelectedEntry: (id: string) => void;
+  clearSelection: () => void;
+  archiveSelected: () => void;
+  deleteSelected: () => void;
 
   // View settings
   viewMode: ViewMode;
@@ -25,6 +33,8 @@ interface AppState {
   setCurrentCardIndex: (index: number) => void;
   editingEntry: Entry | null;
   setEditingEntry: (entry: Entry | null) => void;
+  editDrawerEntry: Entry | null;
+  setEditDrawerEntry: (entry: Entry | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -44,6 +54,36 @@ export const useAppStore = create<AppState>((set) => ({
         e.id === id ? { ...e, archived: true } : e
       ),
     })),
+  deleteEntry: (id) =>
+    set((state) => ({
+      entries: state.entries.filter((e) => e.id !== id),
+    })),
+
+  // Selection (multi-select)
+  selectedEntryIds: new Set(),
+  toggleSelectedEntry: (id) =>
+    set((state) => {
+      const newSet = new Set(state.selectedEntryIds);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return { selectedEntryIds: newSet };
+    }),
+  clearSelection: () => set({ selectedEntryIds: new Set() }),
+  archiveSelected: () =>
+    set((state) => ({
+      entries: state.entries.map((e) =>
+        state.selectedEntryIds.has(e.id) ? { ...e, archived: true } : e
+      ),
+      selectedEntryIds: new Set(),
+    })),
+  deleteSelected: () =>
+    set((state) => ({
+      entries: state.entries.filter((e) => !state.selectedEntryIds.has(e.id)),
+      selectedEntryIds: new Set(),
+    })),
 
   // View settings
   viewMode: "stack",
@@ -58,4 +98,6 @@ export const useAppStore = create<AppState>((set) => ({
   setCurrentCardIndex: (index) => set({ currentCardIndex: index }),
   editingEntry: null,
   setEditingEntry: (entry) => set({ editingEntry: entry }),
+  editDrawerEntry: null,
+  setEditDrawerEntry: (entry) => set({ editDrawerEntry: entry }),
 }));

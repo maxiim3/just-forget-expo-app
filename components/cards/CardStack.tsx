@@ -1,97 +1,51 @@
-import { useRef, useCallback } from "react";
+import { useCallback } from "react";
 import { View, Text } from "react-native";
-import { Swiper, type SwiperCardRefType } from "rn-swiper-list";
+import { GestureCard } from "./GestureCard";
 import { SwipeCard } from "./SwipeCard";
 import { useAppStore } from "@/lib/store";
-import type { Entry } from "@/lib/supabase";
-import { cardDimensions } from "@/constants/theme";
 
 export function CardStack() {
-  const swiperRef = useRef<SwiperCardRefType>(null);
   const entries = useAppStore((state) => state.entries);
-  const archiveEntry = useAppStore((state) => state.archiveEntry);
+  const currentCardIndex = useAppStore((state) => state.currentCardIndex);
   const setCurrentCardIndex = useAppStore((state) => state.setCurrentCardIndex);
-  const setEditingEntry = useAppStore((state) => state.setEditingEntry);
+  const selectedEntryIds = useAppStore((state) => state.selectedEntryIds);
+  const toggleSelectedEntry = useAppStore((state) => state.toggleSelectedEntry);
+  const setEditDrawerEntry = useAppStore((state) => state.setEditDrawerEntry);
 
   // Filter out archived entries
   const activeEntries = entries.filter((e) => !e.archived);
 
+  const handleSwipeDown = useCallback(() => {
+    // Next card
+    if (currentCardIndex < activeEntries.length - 1) {
+      setCurrentCardIndex(currentCardIndex + 1);
+    }
+  }, [currentCardIndex, activeEntries.length, setCurrentCardIndex]);
+
+  const handleSwipeUp = useCallback(() => {
+    // Previous card
+    if (currentCardIndex > 0) {
+      setCurrentCardIndex(currentCardIndex - 1);
+    }
+  }, [currentCardIndex, setCurrentCardIndex]);
+
   const handleSwipeLeft = useCallback(
-    (index: number) => {
-      const entry = activeEntries[index];
+    (entryId: string) => {
+      // Toggle selection
+      toggleSelectedEntry(entryId);
+    },
+    [toggleSelectedEntry]
+  );
+
+  const handleSwipeRight = useCallback(
+    (entryId: string) => {
+      // Open edit drawer
+      const entry = activeEntries.find((e) => e.id === entryId);
       if (entry) {
-        archiveEntry(entry.id);
+        setEditDrawerEntry(entry);
       }
     },
-    [activeEntries, archiveEntry]
-  );
-
-  const handleSwipeTop = useCallback(
-    (index: number) => {
-      const entry = activeEntries[index];
-      if (entry) {
-        setEditingEntry(entry);
-      }
-    },
-    [activeEntries, setEditingEntry]
-  );
-
-  const handleSwipeBottom = useCallback(
-    (index: number) => {
-      const entry = activeEntries[index];
-      if (entry) {
-        setEditingEntry(entry);
-      }
-    },
-    [activeEntries, setEditingEntry]
-  );
-
-  const handleIndexChange = useCallback(
-    (index: number) => {
-      setCurrentCardIndex(index);
-    },
-    [setCurrentCardIndex]
-  );
-
-  const renderCard = useCallback(
-    (entry: Entry) => <SwipeCard entry={entry} />,
-    []
-  );
-
-  const OverlayLeft = useCallback(
-    () => (
-      <View className="flex-1 items-center justify-center bg-accent/90 rounded-sketch">
-        <Text className="font-marker text-4xl text-white">Archive</Text>
-      </View>
-    ),
-    []
-  );
-
-  const OverlayRight = useCallback(
-    () => (
-      <View className="flex-1 items-center justify-center bg-success/90 rounded-sketch">
-        <Text className="font-marker text-4xl text-white">Keep</Text>
-      </View>
-    ),
-    []
-  );
-
-  const OverlayTop = useCallback(
-    () => (
-      <View className="flex-1 items-center justify-center bg-primary/90 rounded-sketch">
-        <Text className="font-marker text-4xl text-white">Edit</Text>
-      </View>
-    ),
-    []
-  );
-
-  const OverlayBottom = useCallback(
-    () => (
-      <View className="flex-1 items-center justify-center bg-primary/90 rounded-sketch">
-        <Text className="font-marker text-4xl text-white">Edit</Text>
-      </View>
-    ),
-    []
+    [activeEntries, setEditDrawerEntry]
   );
 
   if (activeEntries.length === 0) {
@@ -101,36 +55,78 @@ export function CardStack() {
           All clear!
         </Text>
         <Text className="font-caveat text-xl text-secondary text-center px-8">
-          Your inbox is empty. Swipe up to add a new thought.
+          Your inbox is empty. Swipe up from bottom to add a new thought.
         </Text>
       </View>
     );
   }
 
+  // Show current card + 2-3 cards behind for depth visualization
+  const visibleCards = activeEntries.slice(
+    currentCardIndex,
+    Math.min(currentCardIndex + 4, activeEntries.length)
+  );
+
   return (
     <View className="flex-1 items-center justify-center">
-      <Swiper
-        ref={swiperRef}
-        data={activeEntries}
-        renderCard={renderCard}
-        cardStyle={{
-          width: cardDimensions.width,
-          height: cardDimensions.height,
-        }}
-        onSwipeLeft={handleSwipeLeft}
-        onSwipeTop={handleSwipeTop}
-        onSwipeBottom={handleSwipeBottom}
-        onIndexChange={handleIndexChange}
-        OverlayLabelLeft={OverlayLeft}
-        OverlayLabelRight={OverlayRight}
-        OverlayLabelTop={OverlayTop}
-        OverlayLabelBottom={OverlayBottom}
-      />
+      {/* Gesture hints overlay */}
+      {/* Top hint */}
+      <View className="absolute top-16 z-20">
+        <Text className="font-caveat text-lg text-secondary">prev</Text>
+      </View>
+
+      {/* Bottom hint */}
+      <View className="absolute bottom-20 z-20">
+        <Text className="font-caveat text-lg text-secondary">next</Text>
+      </View>
+
+      {/* Left hint */}
+      <View
+        className="absolute left-4 z-20"
+        style={{ transform: [{ rotate: "-90deg" }] }}
+      >
+        <Text className="font-caveat text-lg text-secondary">select</Text>
+      </View>
+
+      {/* Right hint */}
+      <View
+        className="absolute right-4 z-20"
+        style={{ transform: [{ rotate: "90deg" }] }}
+      >
+        <Text className="font-caveat text-lg text-secondary">edit</Text>
+      </View>
+
+      {/* Render cards in reverse order so top card is rendered last (on top) */}
+      {visibleCards
+        .slice()
+        .reverse()
+        .map((entry, reversedIndex) => {
+          const stackPosition = visibleCards.length - 1 - reversedIndex;
+          const isActive = stackPosition === 0;
+
+          return (
+            <GestureCard
+              key={entry.id}
+              isActive={isActive}
+              isSelected={selectedEntryIds.has(entry.id)}
+              stackPosition={stackPosition}
+              onSwipeUp={handleSwipeUp}
+              onSwipeDown={handleSwipeDown}
+              onSwipeLeft={() => handleSwipeLeft(entry.id)}
+              onSwipeRight={() => handleSwipeRight(entry.id)}
+            >
+              <SwipeCard
+                entry={entry}
+                isSelected={selectedEntryIds.has(entry.id)}
+              />
+            </GestureCard>
+          );
+        })}
 
       {/* Card counter */}
       <View className="absolute bottom-8">
         <Text className="font-caveat text-xl text-secondary">
-          {activeEntries.length} {activeEntries.length === 1 ? "thought" : "thoughts"} remaining
+          {currentCardIndex + 1} / {activeEntries.length}
         </Text>
       </View>
     </View>
