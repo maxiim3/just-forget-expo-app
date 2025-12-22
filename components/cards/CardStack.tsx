@@ -2,7 +2,9 @@ import { useCallback } from "react";
 import { View, Text } from "react-native";
 import { GestureCard } from "./GestureCard";
 import { SwipeCard } from "./SwipeCard";
+import { PassedCardsStack } from "./PassedCardsStack";
 import { useAppStore } from "@/lib/store";
+import { cardDimensions } from "@/constants/theme";
 
 export function CardStack() {
   const entries = useAppStore((state) => state.entries);
@@ -22,12 +24,10 @@ export function CardStack() {
     }
   }, [currentCardIndex, activeEntries.length, setCurrentCardIndex]);
 
+  // Swipe up on main card is disabled - use bottom card instead
   const handleSwipeUp = useCallback(() => {
-    // Previous card
-    if (currentCardIndex > 0) {
-      setCurrentCardIndex(currentCardIndex - 1);
-    }
-  }, [currentCardIndex, setCurrentCardIndex]);
+    // No-op: previous is handled by PassedCardsStack
+  }, []);
 
   const handleSwipeLeft = useCallback(
     (entryId: string) => {
@@ -61,20 +61,18 @@ export function CardStack() {
     );
   }
 
-  // Show current card + 2-3 cards behind for depth visualization
+  // Show current card + cards behind for depth visualization (up to 10)
   const visibleCards = activeEntries.slice(
     currentCardIndex,
-    Math.min(currentCardIndex + 4, activeEntries.length)
+    Math.min(currentCardIndex + cardDimensions.maxVisibleCards, activeEntries.length)
   );
 
   return (
     <View className="flex-1 items-center justify-center">
-      {/* Gesture hints overlay */}
-      {/* Top hint */}
-      <View className="absolute top-16 z-20">
-        <Text className="font-caveat text-lg text-secondary">prev</Text>
-      </View>
+      {/* Passed cards at bottom */}
+      <PassedCardsStack />
 
+      {/* Gesture hints overlay */}
       {/* Bottom hint */}
       <View className="absolute bottom-20 z-20">
         <Text className="font-caveat text-lg text-secondary">next</Text>
