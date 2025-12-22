@@ -44,4 +44,11 @@ export const cardDimensions = {
   height: 420,
   stackOffset: 8,
   stackScale: 0.95,
+  // Stack visibility
+  maxVisibleCards: 10,
+  opacityBase: 0.88,
+  // Passed cards at bottom
+  passedCardHeadHeight: 60,
+  passedCardSpacing: 12,
+  passedCardMaxVisible: 5,
 } as const;
