@@ -27,7 +27,12 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Forget",
+      "shortName": "Forget",
+      "description": "Drop thoughts, forget them, find them later",
+      "themeColor": "#FAF8F5",
+      "backgroundColor": "#FAF8F5"
     },
     "plugins": [
       "expo-router"

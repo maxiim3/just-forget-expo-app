@@ -23,6 +23,8 @@ interface AppState {
   setIsCapturing: (value: boolean) => void;
   currentCardIndex: number;
   setCurrentCardIndex: (index: number) => void;
+  editingEntry: Entry | null;
+  setEditingEntry: (entry: Entry | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -54,4 +56,6 @@ export const useAppStore = create<AppState>((set) => ({
   setIsCapturing: (value) => set({ isCapturing: value }),
   currentCardIndex: 0,
   setCurrentCardIndex: (index) => set({ currentCardIndex: index }),
+  editingEntry: null,
+  setEditingEntry: (entry) => set({ editingEntry: entry }),
 }));
