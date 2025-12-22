@@ -1,0 +1,29 @@
+**FORGET — Product Pitch (LLM-Optimized)**
+
+**What:** Universal mental inbox for instant thought capture.
+
+**Problem:** People forget ideas, reminders, and links because capture friction is too high.
+
+**Solution:** Drop anything (voice/text/share) → AI auto-categorizes → Search semantically later.
+
+**Core Flow:** Drop → Forget → Find → Send
+
+**Key Features:**
+- Voice/text/share capture
+- AI tagging (spaces, tags, dates, locations)
+- Semantic + keyword search
+- Smart reminders
+
+**Tech:** PWA + Supabase + OpenAI (Whisper, GPT-4o-mini, embeddings)
+
+**Audience:** Busy adults who lose thoughts daily.
+
+**Business Model:** Freemium. Free tier (50 entries/mo). Pro $5/mo (unlimited + AI search).
+
+**Tagline:** "You forget. We remember."
+
+**Hook:** "Drop it. Forget it. Find it later."
+
+**Tone:** Minimal, confident, slightly witty.
+
+**Differentiator:** Zero organization required. AI handles structure. User handles life.
