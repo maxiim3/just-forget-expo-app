@@ -76,7 +76,7 @@ export function SwipeCard({ entry }: SwipeCardProps) {
       {/* Bottom hint */}
       <View className="mt-4 pt-4 border-t-2 border-muted">
         <Text className="font-caveat text-secondary text-center text-base">
-          ← archive · keep → · ↑↓ edit
+          ← keep · actions →
         </Text>
       </View>
     </View>

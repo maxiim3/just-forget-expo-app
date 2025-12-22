@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
 import { BottomDrawer } from "@/components/capture";
-import { CardStack, EditModal } from "@/components/cards";
+import { CardStack, EditModal, SideEditDrawer } from "@/components/cards";
 import { mockEntries } from "@/lib/mockData";
 import { useAppStore } from "@/lib/store";
 
@@ -63,6 +63,7 @@ export default function CaptureScreen() {
       />
 
       <EditModal />
+      <SideEditDrawer />
     </SafeAreaView>
   );
 }

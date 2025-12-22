@@ -9,41 +9,20 @@ import { cardDimensions } from "@/constants/theme";
 export function CardStack() {
   const swiperRef = useRef<SwiperCardRefType>(null);
   const entries = useAppStore((state) => state.entries);
-  const archiveEntry = useAppStore((state) => state.archiveEntry);
   const setCurrentCardIndex = useAppStore((state) => state.setCurrentCardIndex);
-  const setEditingEntry = useAppStore((state) => state.setEditingEntry);
+  const setEditDrawerEntry = useAppStore((state) => state.setEditDrawerEntry);
 
   // Filter out archived entries
   const activeEntries = entries.filter((e) => !e.archived);
 
-  const handleSwipeLeft = useCallback(
+  const handleSwipeRight = useCallback(
     (index: number) => {
       const entry = activeEntries[index];
       if (entry) {
-        archiveEntry(entry.id);
+        setEditDrawerEntry(entry);
       }
     },
-    [activeEntries, archiveEntry]
-  );
-
-  const handleSwipeTop = useCallback(
-    (index: number) => {
-      const entry = activeEntries[index];
-      if (entry) {
-        setEditingEntry(entry);
-      }
-    },
-    [activeEntries, setEditingEntry]
-  );
-
-  const handleSwipeBottom = useCallback(
-    (index: number) => {
-      const entry = activeEntries[index];
-      if (entry) {
-        setEditingEntry(entry);
-      }
-    },
-    [activeEntries, setEditingEntry]
+    [activeEntries, setEditDrawerEntry]
   );
 
   const handleIndexChange = useCallback(
@@ -60,15 +39,6 @@ export function CardStack() {
 
   const OverlayLeft = useCallback(
     () => (
-      <View className="flex-1 items-center justify-center bg-accent/90 rounded-sketch">
-        <Text className="font-marker text-4xl text-white">Archive</Text>
-      </View>
-    ),
-    []
-  );
-
-  const OverlayRight = useCallback(
-    () => (
       <View className="flex-1 items-center justify-center bg-success/90 rounded-sketch">
         <Text className="font-marker text-4xl text-white">Keep</Text>
       </View>
@@ -76,19 +46,10 @@ export function CardStack() {
     []
   );
 
-  const OverlayTop = useCallback(
+  const OverlayRight = useCallback(
     () => (
       <View className="flex-1 items-center justify-center bg-primary/90 rounded-sketch">
-        <Text className="font-marker text-4xl text-white">Edit</Text>
-      </View>
-    ),
-    []
-  );
-
-  const OverlayBottom = useCallback(
-    () => (
-      <View className="flex-1 items-center justify-center bg-primary/90 rounded-sketch">
-        <Text className="font-marker text-4xl text-white">Edit</Text>
+        <Text className="font-marker text-4xl text-white">Actions</Text>
       </View>
     ),
     []
@@ -117,14 +78,10 @@ export function CardStack() {
           width: cardDimensions.width,
           height: cardDimensions.height,
         }}
-        onSwipeLeft={handleSwipeLeft}
-        onSwipeTop={handleSwipeTop}
-        onSwipeBottom={handleSwipeBottom}
+        onSwipeRight={handleSwipeRight}
         onIndexChange={handleIndexChange}
         OverlayLabelLeft={OverlayLeft}
         OverlayLabelRight={OverlayRight}
-        OverlayLabelTop={OverlayTop}
-        OverlayLabelBottom={OverlayBottom}
       />
 
       {/* Card counter */}
