@@ -129,9 +129,10 @@ export function GestureCard({
 
   const animatedCardStyle = useAnimatedStyle(() => {
     // Stack depth visualization for non-active cards
-    const stackOffsetY = stackPosition * cardDimensions.stackOffset;
+    const stackOffsetY = -stackPosition * cardDimensions.stackOffset;
     const stackScale = Math.pow(cardDimensions.stackScale, stackPosition);
-    const stackOpacity = stackPosition < 3 ? 1 - stackPosition * 0.15 : 0;
+    // Smooth exponential fade for 10 visible cards (never fully disappear)
+    const stackOpacity = Math.pow(cardDimensions.opacityBase, stackPosition);
 
     if (!isActive) {
       return {
@@ -215,10 +216,7 @@ export function GestureCard({
               <Text style={styles.overlayText}>Next</Text>
             </Animated.View>
 
-            {/* Up overlay - Prev */}
-            <Animated.View style={[styles.overlay, styles.overlayPrev, overlayUpStyle]}>
-              <Text style={styles.overlayText}>Prev</Text>
-            </Animated.View>
+            {/* Up overlay - Disabled (prev is handled by bottom card) */}
           </>
         )}
       </Animated.View>

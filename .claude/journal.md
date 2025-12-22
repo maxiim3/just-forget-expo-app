@@ -1,5 +1,62 @@
 # Forget App - Development Journal
 
+## 2025-12-22 - Fix Stack Orientation
+
+### Session Summary
+Fixed card stack orientation to match mockup design.
+
+### What Was Changed
+- Stack now shows cards peeking from the **top** instead of bottom
+- Inverted `stackOffsetY` to negative value in `GestureCard.tsx`
+- Adjusted theme constants: `stackOffset: 16`, `stackScale: 0.97`
+
+### Files Modified
+```
+/constants/theme.ts              (stackOffset, stackScale values)
+/components/cards/GestureCard.tsx (negative stackOffsetY)
+```
+
+---
+
+## 2025-12-22 - Enhanced StackUI (Issue #3)
+
+### Session Summary
+Implemented enhanced card stack visualization with better depth perception and navigation.
+
+### What Was Built
+
+**Stack Visualization:**
+- Extended visible cards from 4 to 10
+- Smooth exponential opacity fade (`0.88^position`) instead of linear cutoff
+- Cards remain visible further back in the stack
+
+**PassedCardsStack Component:**
+- Shows the last swiped card at the bottom of the screen
+- Only the "head" (60px) visible at rest
+- Full card reveals when dragging up
+- Swipe up gesture to navigate back to previous card
+- Positioned in front of main stack (z-index: 50) when dragging
+
+**Gesture Changes:**
+- Disabled swipe up on main card (now handled by bottom card)
+- Removed "prev" hint from top of screen
+
+### Files Created/Modified
+```
+/constants/theme.ts                    (updated - new constants)
+/components/cards/CardStack.tsx        (updated - 10 cards, PassedCardsStack)
+/components/cards/GestureCard.tsx      (updated - opacity curve, no up overlay)
+/components/cards/PassedCardsStack.tsx (new)
+/components/cards/index.ts             (updated - export)
+```
+
+### Technical Decisions
+- Used `bottom: -HIDDEN_PORTION` positioning instead of `overflow: hidden` clip
+- Full card rendered but positioned off-screen for smooth drag reveal
+- Immediate navigation on swipe (no exit animation) for snappy UX
+
+---
+
 ## 2025-12-22 - Phase 1 MVP Complete
 
 ### Session Summary
