@@ -127,34 +127,26 @@ export function GestureCard({
       rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
     });
 
-  const animatedCardStyle = useAnimatedStyle(() => {
-    // Stack depth visualization for non-active cards
-    const stackOffsetY = -stackPosition * cardDimensions.stackOffset;
-    const stackScale = Math.pow(cardDimensions.stackScale, stackPosition);
-    // Smooth exponential fade for 10 visible cards (never fully disappear)
-    const stackOpacity = Math.pow(cardDimensions.opacityBase, stackPosition);
-
-    if (!isActive) {
-      return {
+  // Static style for inactive cards (no animation needed)
+  const staticStackStyle = !isActive
+    ? {
         transform: [
-          { translateY: stackOffsetY },
-          { scale: stackScale },
+          { translateY: -stackPosition * cardDimensions.stackOffset },
+          { scale: Math.pow(cardDimensions.stackScale, stackPosition) },
         ],
-        opacity: stackOpacity,
+        opacity: Math.pow(cardDimensions.opacityBase, stackPosition),
         zIndex: 10 - stackPosition,
-      };
-    }
+      }
+    : undefined;
 
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { rotate: `${rotation.value}deg` },
-      ],
-      opacity: 1,
-      zIndex: 10,
-    };
-  });
+  // Animated style ONLY for the active card
+  const animatedCardStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { rotate: `${rotation.value}deg` },
+    ],
+  }));
 
   // Overlay styles - fade in based on swipe direction
   const overlayRightStyle = useAnimatedStyle(() => ({
@@ -193,9 +185,14 @@ export function GestureCard({
     ),
   }));
 
+  // Combine styles: use animated style for active, static for inactive
+  const cardStyle = isActive
+    ? [styles.cardContainer, animatedCardStyle, { opacity: 1, zIndex: 10 }]
+    : [styles.cardContainer, staticStackStyle];
+
   return (
     <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.cardContainer, animatedCardStyle]}>
+      <Animated.View style={cardStyle}>
         {children}
 
         {/* Swipe overlays - only show on active card */}

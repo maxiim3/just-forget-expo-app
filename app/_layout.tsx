@@ -1,9 +1,10 @@
 import "../global.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Platform, View, Text } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
   Caveat_400Regular,
@@ -13,14 +14,40 @@ import {
 } from "@expo-google-fonts/caveat";
 import { PermanentMarker_400Regular } from "@expo-google-fonts/permanent-marker";
 
+// Keep splash screen visible while loading
+SplashScreen.preventAutoHideAsync();
+
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Caveat_400Regular,
     Caveat_500Medium,
     Caveat_600SemiBold,
     Caveat_700Bold,
     PermanentMarker_400Regular,
   });
+  const [appReady, setAppReady] = useState(false);
+
+  // Handle font loading with timeout
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      // Force app ready after 5s even if fonts failed
+      setAppReady(true);
+    }, 5000);
+
+    if (fontsLoaded || fontError) {
+      clearTimeout(timeout);
+      setAppReady(true);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [fontsLoaded, fontError]);
+
+  // Hide splash when ready
+  useEffect(() => {
+    if (appReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [appReady]);
 
   // PWA setup on web
   useEffect(() => {
@@ -47,12 +74,8 @@ export default function RootLayout() {
     }
   }, []);
 
-  if (!fontsLoaded) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <Text className="text-primary text-lg">Loading...</Text>
-      </View>
-    );
+  if (!appReady) {
+    return null; // SplashScreen handles the loading state
   }
 
   return (

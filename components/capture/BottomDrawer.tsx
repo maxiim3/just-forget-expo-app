@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -33,11 +33,13 @@ export function BottomDrawer({ isOpen, onClose }: BottomDrawerProps) {
   const translateY = useSharedValue(SNAP_BOTTOM);
 
   // Update position when isOpen changes
-  if (isOpen && translateY.value === SNAP_BOTTOM) {
-    translateY.value = withSpring(SNAP_TOP, { damping: 20 });
-  } else if (!isOpen && translateY.value === SNAP_TOP) {
-    translateY.value = withSpring(SNAP_BOTTOM, { damping: 20 });
-  }
+  useEffect(() => {
+    if (isOpen) {
+      translateY.value = withSpring(SNAP_TOP, { damping: 20 });
+    } else {
+      translateY.value = withSpring(SNAP_BOTTOM, { damping: 20 });
+    }
+  }, [isOpen]);
 
   const handleClose = useCallback(() => {
     Keyboard.dismiss();

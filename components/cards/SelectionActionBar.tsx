@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { View, Text, Pressable } from "react-native";
 import Animated, {
   useAnimatedStyle,
+  useSharedValue,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
@@ -13,18 +15,24 @@ export function SelectionActionBar() {
   const deleteSelected = useAppStore((state) => state.deleteSelected);
 
   const count = selectedEntryIds.size;
+  const isVisible = useSharedValue(count > 0 ? 1 : 0);
+
+  // Update shared value when count changes
+  useEffect(() => {
+    isVisible.value = count > 0 ? 1 : 0;
+  }, [count]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
         {
-          translateY: withSpring(count > 0 ? 0 : 100, {
+          translateY: withSpring(isVisible.value ? 0 : 100, {
             damping: 20,
             stiffness: 90,
           }),
         },
       ],
-      opacity: withTiming(count > 0 ? 1 : 0, { duration: 200 }),
+      opacity: withTiming(isVisible.value ? 1 : 0, { duration: 200 }),
     };
   });
 
