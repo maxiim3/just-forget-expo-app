@@ -10,9 +10,10 @@
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "dropbox",
     "raindrop"
   ],
-  "enableAllProjectMcpServers": true
+  "outputStyle": "Learning"
 }
