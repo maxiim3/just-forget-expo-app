@@ -620,4 +620,74 @@ Features deferred from this PRD for future consideration:
 
 ---
 
+## 9. Next Steps
+
+### Immediate Actions
+
+1. **Review & Approve PRD**
+   - Share with stakeholders for feedback
+   - Mark status as "Approved" when ready
+
+2. **Shard PRD into Epic Files**
+   ```
+   /pm *shard-prd
+   ```
+   This will create individual epic files in `docs/prd/` for easier tracking.
+
+3. **Create Detailed Stories**
+   ```
+   /pm *create-story
+   ```
+   Generate detailed story specs with technical requirements for each story.
+
+### Before Starting Epic 1 (UX Polish)
+
+- No blockers — can start immediately
+- Review existing components: `EditModal.tsx`, `SideEditDrawer.tsx`
+- Test current gesture feel to establish baseline
+
+### Before Starting Epic 2 (Supabase Integration)
+
+- **Consult Architect:**
+  ```
+  /architect
+  ```
+  Request technical design for Supabase schema, RLS policies, and offline sync strategy.
+
+- **Set up Supabase project** (if not already done)
+- **Configure environment variables** for Supabase URL and keys
+
+### Before Starting Epic 3 (Voice Input)
+
+- **Research:** Test expo-av and MediaRecorder API capabilities
+- **Set up OpenAI account** for Whisper API access
+- **Estimate costs** for transcription at expected usage
+
+### Before Starting Epic 4 (AI Retrieval)
+
+- **Consult Architect** for Edge Functions design
+- **Plan embedding strategy** (batch vs real-time)
+- **Design fallback behavior** when AI is unavailable
+
+### Agent Commands Reference
+
+| Command | Purpose |
+|---------|---------|
+| `/pm` | Product Manager — PRD, stories, requirements |
+| `/architect` | Technical design, schema, architecture decisions |
+| `/po` | Product Owner — story validation, acceptance criteria |
+| `/dev` | Implementation guidance, code review |
+
+### Files to Reference
+
+| File | Purpose |
+|------|---------|
+| `docs/prd/full-product-prd.md` | This PRD (source of truth) |
+| `docs/brainstorming-session-results.md` | Vision, deferred features |
+| `requirements.md` | Original MVP spec |
+| `lib/supabase.ts` | Existing types and client |
+| `lib/store.ts` | Zustand store patterns |
+
+---
+
 *Generated with BMAD Method — Brownfield PRD Template v2.0*
