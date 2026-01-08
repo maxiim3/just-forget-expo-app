@@ -228,6 +228,12 @@ speak text img link share          │              talk   swipe    grid
    - Development needed: Time-based triggers, AI context understanding
    - Timeline estimate: Phase 3
 
+5. **Image Input**
+   - Description: Capture photos/screenshots as entries with OCR text extraction
+   - Development needed: Camera integration, OCR pipeline (Google Vision or Tesseract)
+   - Timeline estimate: Phase 3+
+   - Note: Deferred from Full Product PRD to control scope
+
 ### Moonshots
 *Ambitious, transformative concepts*
 
