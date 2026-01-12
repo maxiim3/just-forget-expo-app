@@ -9,11 +9,10 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from "react-native-reanimated";
-import { cardDimensions } from "@/constants/theme";
+import { cardDimensions, gestureConfig } from "@/constants/theme";
 
-const SWIPE_THRESHOLD = 50;
-const VELOCITY_THRESHOLD = 300;
-const DIRECTION_LOCK_RATIO = 0.6;
+// Use centralized gesture configuration
+const { swipeThreshold, velocityThreshold, directionLockRatio, spring, rotation } = gestureConfig;
 
 interface GestureCardProps {
   isActive: boolean;
@@ -39,10 +38,10 @@ function determineSwipeDirection(
 
   // Check if minimum threshold met (either distance or velocity)
   const meetsDistanceThreshold =
-    absX >= SWIPE_THRESHOLD || absY >= SWIPE_THRESHOLD;
+    absX >= swipeThreshold || absY >= swipeThreshold;
   const meetsVelocityThreshold =
-    Math.abs(velocityX) >= VELOCITY_THRESHOLD ||
-    Math.abs(velocityY) >= VELOCITY_THRESHOLD;
+    Math.abs(velocityX) >= velocityThreshold ||
+    Math.abs(velocityY) >= velocityThreshold;
 
   if (!meetsDistanceThreshold && !meetsVelocityThreshold) {
     return null;
@@ -54,10 +53,10 @@ function determineSwipeDirection(
 
   const horizontalRatio = absX / total;
 
-  if (horizontalRatio > DIRECTION_LOCK_RATIO) {
+  if (horizontalRatio > directionLockRatio) {
     // Horizontal swipe
     return translationX > 0 ? "right" : "left";
-  } else if (horizontalRatio < 1 - DIRECTION_LOCK_RATIO) {
+  } else if (horizontalRatio < 1 - directionLockRatio) {
     // Vertical swipe
     return translationY > 0 ? "down" : "up";
   }
@@ -78,7 +77,7 @@ export function GestureCard({
 }: GestureCardProps) {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const rotation = useSharedValue(0);
+  const cardRotation = useSharedValue(0);
 
   const handleSwipe = (direction: SwipeDirection) => {
     switch (direction) {
@@ -103,10 +102,10 @@ export function GestureCard({
       translateX.value = event.translationX;
       translateY.value = event.translationY;
       // Slight rotation based on horizontal movement
-      rotation.value = interpolate(
+      cardRotation.value = interpolate(
         event.translationX,
-        [-150, 0, 150],
-        [-8, 0, 8]
+        [-rotation.translationRange, 0, rotation.translationRange],
+        [-rotation.maxDegrees, 0, rotation.maxDegrees]
       );
     })
     .onEnd((event) => {
@@ -121,10 +120,10 @@ export function GestureCard({
         runOnJS(handleSwipe)(direction);
       }
 
-      // Spring back to original position
-      translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
-      translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-      rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
+      // Spring back to original position with tuned feel
+      translateX.value = withSpring(0, spring);
+      translateY.value = withSpring(0, spring);
+      cardRotation.value = withSpring(0, spring);
     });
 
   const animatedCardStyle = useAnimatedStyle(() => {
@@ -149,7 +148,7 @@ export function GestureCard({
       transform: [
         { translateX: translateX.value },
         { translateY: translateY.value },
-        { rotate: `${rotation.value}deg` },
+        { rotate: `${cardRotation.value}deg` },
       ],
       opacity: 1,
       zIndex: 10,
@@ -160,7 +159,7 @@ export function GestureCard({
   const overlayRightStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translateX.value,
-      [0, SWIPE_THRESHOLD],
+      [0, swipeThreshold],
       [0, 1],
       Extrapolation.CLAMP
     ),
@@ -169,7 +168,7 @@ export function GestureCard({
   const overlayLeftStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translateX.value,
-      [0, -SWIPE_THRESHOLD],
+      [0, -swipeThreshold],
       [0, 1],
       Extrapolation.CLAMP
     ),
@@ -178,7 +177,7 @@ export function GestureCard({
   const overlayDownStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translateY.value,
-      [0, SWIPE_THRESHOLD],
+      [0, swipeThreshold],
       [0, 1],
       Extrapolation.CLAMP
     ),
@@ -187,7 +186,7 @@ export function GestureCard({
   const overlayUpStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translateY.value,
-      [0, -SWIPE_THRESHOLD],
+      [0, -swipeThreshold],
       [0, 1],
       Extrapolation.CLAMP
     ),

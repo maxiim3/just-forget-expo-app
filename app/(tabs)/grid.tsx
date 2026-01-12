@@ -1,6 +1,16 @@
-import { View, Text, ScrollView, Pressable, Dimensions } from "react-native";
+import { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Dimensions,
+  Modal,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppStore } from "@/lib/store";
+import { EditModal } from "@/components/cards/EditModal";
 import type { Entry } from "@/lib/supabase";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -20,11 +30,25 @@ const formatRelativeTime = (dateString: string): string => {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
-function GridCard({ entry }: { entry: Entry }) {
+function GridCard({
+  entry,
+  onPress,
+  onLongPress,
+}: {
+  entry: Entry;
+  onPress: () => void;
+  onLongPress: () => void;
+}) {
   return (
     <Pressable
       className="bg-surface border-4 border-primary rounded-sketch p-4"
-      style={{ width: CARD_WIDTH, minHeight: 140 }}
+      style={({ pressed }) => [
+        { width: CARD_WIDTH, minHeight: 140 },
+        pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+      ]}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={400}
     >
       <Text
         className="font-caveat text-lg text-primary leading-tight"
@@ -41,12 +65,46 @@ function GridCard({ entry }: { entry: Entry }) {
 
 export default function GridScreen() {
   const entries = useAppStore((state) => state.entries);
+  const setEditingEntry = useAppStore((state) => state.setEditingEntry);
+  const archiveEntry = useAppStore((state) => state.archiveEntry);
+  const deleteEntry = useAppStore((state) => state.deleteEntry);
+
+  const [menuEntry, setMenuEntry] = useState<Entry | null>(null);
+
   const activeEntries = entries.filter((e) => !e.archived);
   const archivedEntries = entries.filter((e) => e.archived);
 
+  const handleArchive = () => {
+    if (menuEntry) {
+      archiveEntry(menuEntry.id);
+      setMenuEntry(null);
+    }
+  };
+
+  const handleDelete = () => {
+    if (!menuEntry) return;
+
+    Alert.alert(
+      "Delete thought",
+      "Are you sure? This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            deleteEntry(menuEntry.id);
+            setMenuEntry(null);
+          },
+        },
+      ]
+    );
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
+    <>
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="py-4">
           <Text className="font-marker text-3xl text-primary">All Thoughts</Text>
@@ -62,7 +120,12 @@ export default function GridScreen() {
             style={{ gap: CARD_GAP, paddingBottom: 24 }}
           >
             {activeEntries.map((entry) => (
-              <GridCard key={entry.id} entry={entry} />
+              <GridCard
+                key={entry.id}
+                entry={entry}
+                onPress={() => setEditingEntry(entry)}
+                onLongPress={() => setMenuEntry(entry)}
+              />
             ))}
           </View>
         )}
@@ -80,7 +143,12 @@ export default function GridScreen() {
               style={{ gap: CARD_GAP, paddingBottom: 48 }}
             >
               {archivedEntries.map((entry) => (
-                <GridCard key={entry.id} entry={entry} />
+                <GridCard
+                  key={entry.id}
+                  entry={entry}
+                  onPress={() => setEditingEntry(entry)}
+                  onLongPress={() => setMenuEntry(entry)}
+                />
               ))}
             </View>
           </>
@@ -98,6 +166,43 @@ export default function GridScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+      <EditModal />
+
+      {/* Context menu modal */}
+      <Modal
+        visible={!!menuEntry}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuEntry(null)}
+      >
+        <Pressable
+          className="flex-1 bg-black/50 items-center justify-center"
+          onPress={() => setMenuEntry(null)}
+        >
+          <View className="bg-surface border-4 border-primary rounded-sketchLg p-4 min-w-[200px]">
+            <Text className="font-marker text-lg text-primary mb-3 text-center">
+              Actions
+            </Text>
+            <Pressable
+              className="py-3 px-4 border-2 border-muted rounded-sketch mb-2"
+              onPress={handleArchive}
+            >
+              <Text className="font-caveat text-xl text-primary text-center">
+                📦 Archive
+              </Text>
+            </Pressable>
+            <Pressable
+              className="py-3 px-4 bg-red-100 border-2 border-red-400 rounded-sketch"
+              onPress={handleDelete}
+            >
+              <Text className="font-caveat text-xl text-red-600 text-center">
+                🗑️ Delete
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+    </>
   );
 }

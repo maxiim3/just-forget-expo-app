@@ -52,3 +52,26 @@ export const cardDimensions = {
   passedCardSpacing: 12,
   passedCardMaxVisible: 5,
 } as const;
+
+/**
+ * Gesture configuration for swipe cards
+ * Tuned for 9/10 feel: snappy, responsive, delightful
+ */
+export const gestureConfig = {
+  // Swipe detection thresholds
+  swipeThreshold: 40, // px - distance to trigger (was 50, now more responsive)
+  velocityThreshold: 400, // px/s - velocity for quick flicks (was 300, now requires more intent)
+  directionLockRatio: 0.65, // 0-1 - how pure the direction must be (was 0.6, now stricter)
+
+  // Spring animation - snap back feel
+  spring: {
+    damping: 20, // Higher = less bouncy (was 15)
+    stiffness: 200, // Higher = faster snap (was 150)
+  },
+
+  // Rotation during swipe
+  rotation: {
+    maxDegrees: 6, // Max rotation in degrees (was 8, now subtler)
+    translationRange: 120, // px translation for max rotation (was 150)
+  },
+} as const;
