@@ -6,123 +6,81 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Forget** is a universal mental inbox app — a place to instantly drop thoughts, ideas, links, voice notes, and reminders. Core flow: `Drop → Forget → Find → Send`
 
-## Tech Stack
-
-- **Framework**: Expo SDK 52+ with Expo Router
-- **Styling**: NativeWind (Tailwind for React Native)
-- **State**: Zustand
-- **Backend**: Supabase (auth, database, storage)
-- **Animations**: react-native-reanimated
-- **Gestures**: react-native-gesture-handler
-- **Swipe**: rn-swiper-list
-- **Voice**: expo-av (native) / MediaRecorder API (web)
-
 ## Development Commands
 
 ```bash
-# Install dependencies
-bun install
-
-# Start development server (web-first)
-bunx expo start --web
-
-# Start for all platforms (scan QR with Expo Go)
-bunx expo start
-
-# Install Expo-compatible packages (always use this)
-bunx expo install <package-name>
-
-# Build Android APK
-bunx eas build -p android --profile preview
+bun install                        # Install dependencies
+bunx expo start --web              # Web-first development (primary)
+bunx expo start                    # All platforms (scan QR with Expo Go)
+bunx expo install <package-name>   # Install Expo-compatible packages (always use this!)
+bunx eas build -p android --profile preview  # Build Android APK
 ```
 
-## Project Structure
+## Architecture
 
+### Stack
+- **Expo SDK 52+** with Expo Router (file-based routing)
+- **NativeWind v4** (Tailwind for React Native) + custom sketch design system
+- **Zustand** for state management
+- **Supabase** for backend (not yet integrated)
+- **react-native-reanimated** + **react-native-gesture-handler** for animations/gestures
+
+### App Structure
 ```
-/app
-  /(tabs)/
-    _layout.tsx          # Tab navigator
-    capture.tsx          # Stack view (swipe cards + drawer)
-    retrieve.tsx         # Chat view (Phase 2)
-    grid.tsx             # Grid view of all entries
-
-/components
-  /cards
-    SwipeCard.tsx        # Individual card component
-    CardStack.tsx        # Swipeable card stack
-    EditModal.tsx        # Edit entry modal
-  /capture
-    BottomDrawer.tsx     # Slide-up text capture
-
-/lib
-  supabase.ts           # Supabase client + types
-  store.ts              # Zustand store
-  mockData.ts           # 12 mock entries for testing
-
-/public
-  manifest.json         # PWA manifest
-  sw.js                 # Service worker for offline
-
-/constants
-  theme.ts              # Colors, fonts, spacing
+app/_layout.tsx        → Root: GestureHandlerRootView, fonts, PWA setup
+app/(tabs)/_layout.tsx → Tab navigator (capture, retrieve, grid)
+app/(tabs)/capture.tsx → Main view: CardStack + BottomDrawer + EditDrawer
 ```
 
-## Data Model (Supabase)
+### Component Architecture
 
-- **entries**: id, user_id, content, raw_audio_url, created_at, updated_at, metadata (JSONB), archived
-- **labels**: id, user_id, name, type (space/tag/location/date), metadata
-- **entry_labels**: entry_id, label_id (join table)
+**Card System** (`components/cards/`):
+- `CardStack.tsx` — Manages visible cards (up to 10), handles swipe callbacks
+- `GestureCard.tsx` — Pan gesture wrapper using react-native-gesture-handler/Reanimated
+- `SwipeCard.tsx` — Visual card component (sketch style)
+- `PassedCardsStack.tsx` — Shows previously viewed cards at bottom
+- `SideEditDrawer.tsx` — Slide-in editor triggered by swipe right
 
-## Design Guidelines
+**Capture System** (`components/capture/`):
+- `BottomDrawer.tsx` — Slide-up text input for new entries
 
-- **Aesthetic**: Marker/hand-drawn/sketch style
-- **Borders**: Large (4-6px)
-- **Corners**: Rounded (16-24px)
-- **Fonts**: Handwritten feel (Caveat, Permanent Marker)
-- **Colors**: Muted background (#FAF8F5), bold accent (#FF6B6B)
+### State Management (`lib/store.ts`)
 
-## Gesture System (Capture Mode)
+Single Zustand store with:
+- **entries[]** — All entries (use `entries.filter(e => !e.archived)` for active)
+- **selectedEntryIds: Set** — Multi-select for batch operations
+- **currentCardIndex** — Current position in card stack
+- **editDrawerEntry** — Entry being edited in side drawer
+- **viewMode** — "stack" | "grid"
 
-| Gesture | Action |
-|---------|--------|
-| Swipe Right | Keep / next card |
-| Swipe Left | Archive |
-| Swipe Up/Down | Edit entry |
-| Bottom edge swipe up | New capture |
-| FAB (+) button | New capture (fallback) |
+### Styling System
 
-## Current Status
+Uses NativeWind with custom theme in `tailwind.config.js`:
+- Colors: `background`, `surface`, `primary`, `secondary`, `accent`, `muted`
+- Fonts: `font-caveat`, `font-marker` (loaded in root layout)
+- Border utilities: `border-sketch` (4px), `rounded-sketch` (16px)
+- Card dimensions defined in `constants/theme.ts`
 
-### Phase 1 — MVP (COMPLETED)
-- [x] Swipe card stack with rn-swiper-list
-- [x] All gesture directions working (left/right/up/down)
-- [x] Archive functionality
-- [x] Edit modal for entries
-- [x] Bottom drawer for text capture
-- [x] Grid view with active/archived sections
-- [x] 12 mock entries for testing
-- [x] PWA support (installable, offline-capable)
-- [x] Android support via Expo Go
+## Gesture Mapping
 
-### Phase 2 — Next Steps
-- [ ] Voice recorder (expo-av + MediaRecorder)
-- [ ] Supabase database integration
-- [ ] User authentication
-- [ ] Retrieve/Chat view with AI search
-- [ ] Vector embeddings for semantic search
+| Gesture | Action | Handler |
+|---------|--------|---------|
+| Swipe Down | Next card | `setCurrentCardIndex(index + 1)` |
+| Swipe Up | Previous (via PassedCardsStack) | |
+| Swipe Left | Toggle selection | `toggleSelectedEntry(id)` |
+| Swipe Right | Open edit drawer | `setEditDrawerEntry(entry)` |
 
 ## Key Constraints
 
-- Web-first development (no Android Studio/iOS Simulator required)
-- Serverless architecture (Supabase only)
-- Native-feeling gestures are critical
-- AI services should be modular (easy to swap providers)
+- **Web-first**: No Android Studio/iOS Simulator required
+- **Cross-platform**: Same codebase for web, iOS, Android
+- **Gesture-driven**: Native-feeling swipe interactions are critical
+- **Sketch aesthetic**: Hand-drawn look with Caveat/Permanent Marker fonts
 
+## Environment Variables
 
-# TODO
-
-- refactor pm
-- add issues
-- add stories
-- add guidelines
-- add design-system
+```
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
+```
+- on utilise bun seulement dans le proje

@@ -5,14 +5,16 @@
       "Bash(bun install:*)",
       "Bash(bunx expo install:*)",
       "Bash(bun add:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []
   },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "dropbox",
     "raindrop"
   ],
-  "enableAllProjectMcpServers": true
+  "outputStyle": "Learning"
 }
