@@ -18,10 +18,12 @@ Implement the AI layer that powers intelligent retrieval, auto-tagging, and natu
 - **Differentiation:** Key feature that separates Forget from note apps
 - **Sticky Product:** AI-powered search creates unique value
 
-## Current State
+## Current State (Post Epic 1)
 
-- Retrieve view exists but is empty placeholder
-- No AI integration
+- **Unified Command Input** exists with NLP parsing (Epic 1.2)
+- Command Input supports: add, search, find, filter, archive, delete, #tags
+- Basic text-based search/filter implemented
+- No AI integration yet
 - No tagging system (labels table exists but unused)
 - No semantic search
 
@@ -75,15 +77,17 @@ Implement the AI layer that powers intelligent retrieval, auto-tagging, and natu
 
 ### Story 4.3: Semantic Search
 - Implement vector similarity search
-- Search UI in Retrieve view
-- Combine semantic + keyword search
-- Display relevance-ranked results
+- **Integrate with Command Input** search/find commands
+- Combine semantic + keyword search (hybrid)
+- Display relevance-ranked results in current view
+- **Note:** Uses Command Input's existing search infrastructure
 
 ### Story 4.4: Chat Retrieval (Talk to DB)
-- Build chat interface in Retrieve view
-- Natural language query processing
-- Context-aware responses
-- Display relevant entries in chat
+- **Extend existing Command Input** with AI-powered responses
+- Natural language query processing via Command Input
+- Context-aware responses displayed as result cards
+- Conversation history in session (optional expansion)
+- **Note:** Builds on Command Input infrastructure from Epic 1.2
 
 ### Story 4.5: Smart Recall
 - Time-based retrieval triggers
@@ -138,3 +142,4 @@ Implement the AI layer that powers intelligent retrieval, auto-tagging, and natu
 ---
 
 *Epic created by Sarah (Product Owner) - 2026-01-08*
+*Updated: 2026-01-12 - Adjusted Stories 4.3 & 4.4 to integrate with Command Input from Epic 1.2*

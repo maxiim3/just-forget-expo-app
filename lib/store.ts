@@ -11,6 +11,7 @@ interface AppState {
   addEntry: (entry: Entry) => void;
   updateEntry: (id: string, updates: Partial<Entry>) => void;
   archiveEntry: (id: string) => void;
+  unarchiveEntry: (id: string) => void;
   deleteEntry: (id: string) => void;
 
   // Selection (multi-select)
@@ -52,6 +53,12 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       entries: state.entries.map((e) =>
         e.id === id ? { ...e, archived: true } : e
+      ),
+    })),
+  unarchiveEntry: (id) =>
+    set((state) => ({
+      entries: state.entries.map((e) =>
+        e.id === id ? { ...e, archived: false } : e
       ),
     })),
   deleteEntry: (id) =>
