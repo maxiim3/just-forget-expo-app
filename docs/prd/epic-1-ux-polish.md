@@ -1,6 +1,6 @@
 # Epic 1: UX Polish
 
-**Status:** In Progress
+**Status:** Done
 **Priority:** High
 **Phase:** Immediate
 **Estimated Stories:** 3
@@ -46,13 +46,13 @@ Enhance the existing MVP user experience to production quality. Focus on complet
 - Visual press feedback (opacity + scale)
 - **Status:** Done
 
-### Story 1.2: Unified Command Input 🔄
+### Story 1.2: Unified Command Input ✅
 - Floating input bar fixed at bottom of screen
 - NLP keyword detection (add, search, find, filter, archive, delete)
 - Highlighted keywords + command chip display
 - Tag detection (#tag) and natural dates (tomorrow, monday)
 - Replaces Retrieve view and BottomDrawer
-- **Status:** In Progress
+- **Status:** Done
 
 ### Story 1.3: Gesture Polish ✅
 - Centralized gesture config in theme.ts
@@ -78,12 +78,12 @@ Enhance the existing MVP user experience to production quality. Focus on complet
 - [x] Grid cards are tappable with edit capability
 - [x] Grid supports long-press for archive/delete
 - [x] Gesture feel rated 9/10 (centralized config, tuned parameters)
-- [ ] Command Input visible on all views (floating bottom)
-- [ ] Keywords highlighted in input with colors
-- [ ] Command chip shows detected action
-- [ ] Search/filter updates views in real-time
-- [ ] Retrieve tab removed, navigation is 2 views only
-- [ ] No regression in existing Swipe view functionality
+- [x] Command Input visible on all views (floating bottom)
+- [x] Keywords highlighted in input with colors
+- [x] Command chip shows detected action
+- [x] Search/filter updates views in real-time
+- [x] Retrieve tab removed, navigation is 2 views only
+- [x] No regression in existing Swipe view functionality
 
 ## Risks
 
@@ -97,3 +97,4 @@ Enhance the existing MVP user experience to production quality. Focus on complet
 
 *Epic created by Sarah (Product Owner) - 2026-01-08*
 *Updated: 2026-01-12 - Stories 1.1 & 1.3 Done, Story 1.2 redefined as Command Input*
+*Updated: 2026-01-14 - Epic Complete! All stories done.*

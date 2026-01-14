@@ -1,8 +1,15 @@
+import { useMemo } from "react";
 import { create } from "zustand";
 import type { Entry } from "./supabase";
 
 type ViewMode = "stack" | "grid";
 type SortMode = "modified" | "alphabetical";
+
+export interface FilterState {
+  query: string;
+  tags: string[];
+  showArchived: boolean;
+}
 
 interface AppState {
   // Entries
@@ -36,6 +43,13 @@ interface AppState {
   setEditingEntry: (entry: Entry | null) => void;
   editDrawerEntry: Entry | null;
   setEditDrawerEntry: (entry: Entry | null) => void;
+
+  // Command/Filter state
+  commandInput: string;
+  setCommandInput: (input: string) => void;
+  activeFilter: FilterState;
+  setActiveFilter: (filter: Partial<FilterState>) => void;
+  clearFilter: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -107,4 +121,56 @@ export const useAppStore = create<AppState>((set) => ({
   setEditingEntry: (entry) => set({ editingEntry: entry }),
   editDrawerEntry: null,
   setEditDrawerEntry: (entry) => set({ editDrawerEntry: entry }),
+
+  // Command/Filter state
+  commandInput: "",
+  setCommandInput: (input) => set({ commandInput: input }),
+  activeFilter: {
+    query: "",
+    tags: [],
+    showArchived: false,
+  },
+  setActiveFilter: (filter) =>
+    set((state) => ({
+      activeFilter: { ...state.activeFilter, ...filter },
+    })),
+  clearFilter: () =>
+    set({
+      activeFilter: { query: "", tags: [], showArchived: false },
+    }),
 }));
+
+/**
+ * Selector hook for filtered entries based on activeFilter state.
+ * Filters by search query and tags.
+ */
+export function useFilteredEntries() {
+  const entries = useAppStore((state) => state.entries);
+  const filter = useAppStore((state) => state.activeFilter);
+
+  return useMemo(() => {
+    let result = entries;
+
+    // Filter archived
+    if (!filter.showArchived) {
+      result = result.filter((e) => !e.archived);
+    }
+
+    // Filter by tags
+    if (filter.tags.length > 0) {
+      result = result.filter((e) =>
+        filter.tags.some((tag) =>
+          e.content.toLowerCase().includes(`#${tag.toLowerCase()}`)
+        )
+      );
+    }
+
+    // Filter by search query
+    if (filter.query) {
+      const q = filter.query.toLowerCase();
+      result = result.filter((e) => e.content.toLowerCase().includes(q));
+    }
+
+    return result;
+  }, [entries, filter]);
+}

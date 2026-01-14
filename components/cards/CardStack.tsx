@@ -1,21 +1,24 @@
 import { useCallback } from "react";
-import { View, Text } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { GestureCard } from "./GestureCard";
 import { SwipeCard } from "./SwipeCard";
 import { PassedCardsStack } from "./PassedCardsStack";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, useFilteredEntries } from "@/lib/store";
 import { cardDimensions } from "@/constants/theme";
 
 export function CardStack() {
-  const entries = useAppStore((state) => state.entries);
+  // useFilteredEntries applies search query, tags, and archived filter
+  const activeEntries = useFilteredEntries();
+  const activeFilter = useAppStore((state) => state.activeFilter);
+  const clearFilter = useAppStore((state) => state.clearFilter);
   const currentCardIndex = useAppStore((state) => state.currentCardIndex);
   const setCurrentCardIndex = useAppStore((state) => state.setCurrentCardIndex);
   const selectedEntryIds = useAppStore((state) => state.selectedEntryIds);
   const toggleSelectedEntry = useAppStore((state) => state.toggleSelectedEntry);
   const setEditDrawerEntry = useAppStore((state) => state.setEditDrawerEntry);
 
-  // Filter out archived entries
-  const activeEntries = entries.filter((e) => !e.archived);
+  // Check if user is actively filtering
+  const isFiltering = activeFilter.query.length > 0 || activeFilter.tags.length > 0;
 
   const handleSwipeDown = useCallback(() => {
     // Next card
@@ -49,6 +52,30 @@ export function CardStack() {
   );
 
   if (activeEntries.length === 0) {
+    if (isFiltering) {
+      // No search results - show helpful message with clear action
+      return (
+        <View className="flex-1 items-center justify-center">
+          <Text className="font-marker text-2xl text-secondary mb-2">
+            No matches found
+          </Text>
+          <Text className="font-caveat text-lg text-secondary text-center px-8 mb-6">
+            Try different keywords or clear the filter
+          </Text>
+          <Pressable
+            onPress={clearFilter}
+            className="bg-muted border-2 border-secondary px-6 py-3 rounded-sketch"
+            style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+          >
+            <Text className="font-caveat text-lg text-primary">
+              Clear filter
+            </Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    // Truly empty inbox
     return (
       <View className="flex-1 items-center justify-center">
         <Text className="font-marker text-3xl text-secondary mb-4">

@@ -9,9 +9,11 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, useFilteredEntries } from "@/lib/store";
 import { EditModal } from "@/components/cards/EditModal";
+import { CommandInput } from "@/components/command";
 import type { Entry } from "@/lib/supabase";
+import type { ParsedCommand } from "@/lib/commandTypes";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_GAP = 12;
@@ -68,11 +70,48 @@ export default function GridScreen() {
   const setEditingEntry = useAppStore((state) => state.setEditingEntry);
   const archiveEntry = useAppStore((state) => state.archiveEntry);
   const deleteEntry = useAppStore((state) => state.deleteEntry);
+  const addEntry = useAppStore((state) => state.addEntry);
+  const setActiveFilter = useAppStore((state) => state.setActiveFilter);
+  const activeFilter = useAppStore((state) => state.activeFilter);
+  const clearFilter = useAppStore((state) => state.clearFilter);
 
   const [menuEntry, setMenuEntry] = useState<Entry | null>(null);
 
-  const activeEntries = entries.filter((e) => !e.archived);
+  // Use filtered entries for display (respects search/filter state)
+  const filteredEntries = useFilteredEntries();
+  const activeEntries = filteredEntries.filter((e) => !e.archived);
+  // For archived, get from all entries since useFilteredEntries excludes archived by default
   const archivedEntries = entries.filter((e) => e.archived);
+
+  // Check if user is actively filtering
+  const isFiltering = activeFilter.query.length > 0 || activeFilter.tags.length > 0;
+
+  const handleCommand = (command: ParsedCommand) => {
+    switch (command.action) {
+      case "add":
+        // Create new entry
+        const newEntry: Entry = {
+          id: crypto.randomUUID(),
+          user_id: "local",
+          content: command.content,
+          archived: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        addEntry(newEntry);
+        break;
+      case "search":
+        // Set filter
+        setActiveFilter({ query: command.content, tags: command.tags });
+        break;
+      case "delete":
+        // Delete selected (handled elsewhere)
+        break;
+      case "archive":
+        // Archive selected (handled elsewhere)
+        break;
+    }
+  };
 
   const handleArchive = () => {
     if (menuEntry) {
@@ -104,7 +143,11 @@ export default function GridScreen() {
   return (
     <>
       <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
-        <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
+        <ScrollView
+        className="flex-1 px-6"
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View className="py-4">
           <Text className="font-marker text-3xl text-primary">All Thoughts</Text>
@@ -154,19 +197,43 @@ export default function GridScreen() {
           </>
         )}
 
-        {/* Empty state */}
-        {entries.length === 0 && (
+        {/* Empty state - no search results */}
+        {isFiltering && activeEntries.length === 0 && (
+          <View className="flex-1 items-center justify-center py-20">
+            <Text className="font-marker text-2xl text-secondary mb-2">
+              No matches found
+            </Text>
+            <Text className="font-caveat text-lg text-secondary text-center px-4 mb-6">
+              Try different keywords or clear the filter
+            </Text>
+            <Pressable
+              onPress={clearFilter}
+              className="bg-muted border-2 border-secondary px-6 py-3 rounded-sketch"
+              style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+            >
+              <Text className="font-caveat text-lg text-primary">
+                Clear filter
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Empty state - truly empty */}
+        {!isFiltering && entries.length === 0 && (
           <View className="flex-1 items-center justify-center py-20">
             <Text className="font-marker text-2xl text-secondary mb-2">
               No thoughts yet
             </Text>
             <Text className="font-caveat text-xl text-secondary text-center">
-              Go to Capture to add your first thought
+              Go to Swipe to add your first thought
             </Text>
           </View>
         )}
       </ScrollView>
       </SafeAreaView>
+
+      <CommandInput onSubmit={handleCommand} placeholder="Drop a thought..." />
+
       <EditModal />
 
       {/* Context menu modal */}

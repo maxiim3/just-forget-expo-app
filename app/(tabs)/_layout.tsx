@@ -39,15 +39,7 @@ export default function TabLayout() {
         name="capture"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="Capture" focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="retrieve"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Retrieve" focused={focused} />
+            <TabIcon label="Swipe" focused={focused} />
           ),
         }}
       />
@@ -57,6 +49,13 @@ export default function TabLayout() {
           tabBarIcon: ({ focused }) => (
             <TabIcon label="Grid" focused={focused} />
           ),
+        }}
+      />
+      {/* Retrieve tab removed - functionality merged into CommandInput */}
+      <Tabs.Screen
+        name="retrieve"
+        options={{
+          href: null, // Hide from tab bar
         }}
       />
     </Tabs>

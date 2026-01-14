@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useEffect } from "react";
+import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BottomDrawer } from "@/components/capture";
 import { CardStack, EditModal, SideEditDrawer, SelectionActionBar } from "@/components/cards";
+import { CommandInput } from "@/components/command";
 import { mockEntries } from "@/lib/mockData";
 import { useAppStore } from "@/lib/store";
+import type { ParsedCommand } from "@/lib/commandTypes";
+import type { Entry } from "@/lib/supabase";
 
 export default function CaptureScreen() {
   const setEntries = useAppStore((state) => state.setEntries);
   const entries = useAppStore((state) => state.entries);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const addEntry = useAppStore((state) => state.addEntry);
+  const setActiveFilter = useAppStore((state) => state.setActiveFilter);
 
   // Load mock data on first render
   useEffect(() => {
@@ -18,28 +21,40 @@ export default function CaptureScreen() {
     }
   }, []);
 
-  const openDrawer = () => {
-    setIsDrawerOpen(true);
+  const handleCommand = (command: ParsedCommand) => {
+    switch (command.action) {
+      case "add":
+        // Create new entry
+        const newEntry: Entry = {
+          id: crypto.randomUUID(),
+          user_id: "local",
+          content: command.content,
+          archived: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        addEntry(newEntry);
+        break;
+      case "search":
+        // Set filter
+        setActiveFilter({ query: command.content, tags: command.tags });
+        break;
+      case "delete":
+        // Delete selected (handled elsewhere via SelectionActionBar)
+        break;
+      case "archive":
+        // Archive selected (handled elsewhere via SelectionActionBar)
+        break;
+    }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <View className="flex-1">
         <CardStack />
-
-        {/* FAB to open drawer */}
-        <Pressable
-          className="absolute bottom-6 right-6 w-16 h-16 bg-primary border-4 border-primary rounded-full items-center justify-center shadow-lg"
-          onPress={openDrawer}
-        >
-          <Text className="font-marker text-3xl text-surface">+</Text>
-        </Pressable>
       </View>
 
-      <BottomDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-      />
+      <CommandInput onSubmit={handleCommand} placeholder="Drop a thought..." />
 
       <EditModal />
       <SideEditDrawer />
