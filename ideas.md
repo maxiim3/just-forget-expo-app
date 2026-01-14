@@ -1,0 +1,3 @@
+- NLP
+- Input text primary input : "find" / "add" -> Todoist alike. Mini modele IA NLP -> fixed keywords
+- 
