@@ -34,6 +34,7 @@ function determineSwipeDirection(
   velocityX: number,
   velocityY: number
 ): SwipeDirection {
+  "worklet";
   const absX = Math.abs(translationX);
   const absY = Math.abs(translationY);
 
@@ -99,14 +100,16 @@ export function GestureCard({
 
   const panGesture = Gesture.Pan()
     .enabled(isActive)
+    .activeOffsetX([-15, 15])
+    .activeOffsetY([-15, 15])
     .onUpdate((event) => {
       translateX.value = event.translationX;
       translateY.value = event.translationY;
-      // Slight rotation based on horizontal movement
+      // Subtle rotation based on horizontal movement
       rotation.value = interpolate(
         event.translationX,
-        [-150, 0, 150],
-        [-8, 0, 8]
+        [-200, 0, 200],
+        [-4, 0, 4]
       );
     })
     .onEnd((event) => {
@@ -121,40 +124,32 @@ export function GestureCard({
         runOnJS(handleSwipe)(direction);
       }
 
-      // Spring back to original position
-      translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
-      translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-      rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
+      // Spring back to original position (snappy, minimal bounce)
+      translateX.value = withSpring(0, { damping: 20, stiffness: 400 });
+      translateY.value = withSpring(0, { damping: 20, stiffness: 400 });
+      rotation.value = withSpring(0, { damping: 20, stiffness: 400 });
     });
 
-  const animatedCardStyle = useAnimatedStyle(() => {
-    // Stack depth visualization for non-active cards
-    const stackOffsetY = -stackPosition * cardDimensions.stackOffset;
-    const stackScale = Math.pow(cardDimensions.stackScale, stackPosition);
-    // Smooth exponential fade for 10 visible cards (never fully disappear)
-    const stackOpacity = Math.pow(cardDimensions.opacityBase, stackPosition);
-
-    if (!isActive) {
-      return {
+  // Static style for inactive cards (no animation needed)
+  const staticStackStyle = !isActive
+    ? {
         transform: [
-          { translateY: stackOffsetY },
-          { scale: stackScale },
+          { translateY: -stackPosition * cardDimensions.stackOffset },
+          { scale: Math.pow(cardDimensions.stackScale, stackPosition) },
         ],
-        opacity: stackOpacity,
+        opacity: Math.pow(cardDimensions.opacityBase, stackPosition),
         zIndex: 10 - stackPosition,
-      };
-    }
+      }
+    : undefined;
 
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { rotate: `${rotation.value}deg` },
-      ],
-      opacity: 1,
-      zIndex: 10,
-    };
-  });
+  // Animated style ONLY for the active card
+  const animatedCardStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { rotate: `${rotation.value}deg` },
+    ],
+  }));
 
   // Overlay styles - fade in based on swipe direction
   const overlayRightStyle = useAnimatedStyle(() => ({
@@ -193,9 +188,14 @@ export function GestureCard({
     ),
   }));
 
+  // Combine styles: use animated style for active, static for inactive
+  const cardStyle = isActive
+    ? [styles.cardContainer, animatedCardStyle, { opacity: 1, zIndex: 10 }]
+    : [styles.cardContainer, staticStackStyle];
+
   return (
     <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.cardContainer, animatedCardStyle]}>
+      <Animated.View style={cardStyle}>
         {children}
 
         {/* Swipe overlays - only show on active card */}
