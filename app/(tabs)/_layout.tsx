@@ -33,6 +33,8 @@ export default function TabLayout() {
           paddingBottom: 10,
         },
         tabBarShowLabel: false,
+        // Disable swipe gestures to prevent conflict with card gestures
+        swipeEnabled: false,
       }}
     >
       <Tabs.Screen

@@ -34,6 +34,7 @@ function determineSwipeDirection(
   velocityX: number,
   velocityY: number
 ): SwipeDirection {
+  "worklet";
   const absX = Math.abs(translationX);
   const absY = Math.abs(translationY);
 
@@ -99,14 +100,16 @@ export function GestureCard({
 
   const panGesture = Gesture.Pan()
     .enabled(isActive)
+    .activeOffsetX([-15, 15])
+    .activeOffsetY([-15, 15])
     .onUpdate((event) => {
       translateX.value = event.translationX;
       translateY.value = event.translationY;
-      // Slight rotation based on horizontal movement
+      // Subtle rotation based on horizontal movement
       rotation.value = interpolate(
         event.translationX,
-        [-150, 0, 150],
-        [-8, 0, 8]
+        [-200, 0, 200],
+        [-4, 0, 4]
       );
     })
     .onEnd((event) => {
@@ -121,10 +124,10 @@ export function GestureCard({
         runOnJS(handleSwipe)(direction);
       }
 
-      // Spring back to original position
-      translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
-      translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-      rotation.value = withSpring(0, { damping: 15, stiffness: 150 });
+      // Spring back to original position (snappy, minimal bounce)
+      translateX.value = withSpring(0, { damping: 20, stiffness: 400 });
+      translateY.value = withSpring(0, { damping: 20, stiffness: 400 });
+      rotation.value = withSpring(0, { damping: 20, stiffness: 400 });
     });
 
   // Static style for inactive cards (no animation needed)

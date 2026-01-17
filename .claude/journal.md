@@ -1,5 +1,63 @@
 # Forget App - Development Journal
 
+## 2025-12-24 - Fix Mobile Reanimated Crash (Issue #2)
+
+**Branch:** `fix/issue-2-mobile-reanimated`
+
+### Problem
+Expo Go crashed systematically when swiping cards on Android emulator and physical devices. The app worked fine on web but crashed immediately on any swipe gesture on mobile.
+
+### Root Cause
+After upgrading to **Reanimated 4.1.1** (from 3.16), the worklet requirements became stricter. The `determineSwipeDirection` function was called inside `.onEnd()` (which runs on the UI thread as a worklet), but the function itself wasn't marked as a worklet.
+
+### Fixes Applied
+
+**1. Worklet directive (critical fix):**
+```typescript
+function determineSwipeDirection(...): SwipeDirection {
+  "worklet";  // <-- Added this
+  // ...
+}
+```
+
+**2. Gesture activation threshold:**
+Added `activeOffsetX/Y` to prevent conflicts with system back gestures:
+```typescript
+Gesture.Pan()
+  .activeOffsetX([-15, 15])
+  .activeOffsetY([-15, 15])
+```
+
+**3. Snappier animations:**
+- Spring: `damping: 20, stiffness: 400` (was 15/150)
+- Rotation: reduced from ±8° to ±4° over 200px
+
+**4. Tab navigation:**
+Disabled swipe between tabs to prevent gesture conflicts:
+```typescript
+screenOptions={{ swipeEnabled: false }}
+```
+
+**5. New Architecture:**
+Enabled in app.json to match Expo Go behavior:
+```json
+"newArchEnabled": true
+```
+
+### Files Modified
+```
+/components/cards/GestureCard.tsx  (worklet, gestures, animations)
+/app/(tabs)/_layout.tsx            (swipeEnabled: false)
+/app.json                          (newArchEnabled: true)
+```
+
+### Lessons Learned
+- Reanimated 4 requires explicit `"worklet";` directive for any function called from gesture handlers
+- Always test on mobile early - web and native have different runtime behaviors
+- System gestures (Android back swipe) can interfere with app gestures
+
+---
+
 ## 2025-12-22 - Fix Stack Orientation
 
 ### Session Summary
