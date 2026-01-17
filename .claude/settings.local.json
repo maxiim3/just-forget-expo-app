@@ -6,9 +6,7 @@
       "Bash(bunx expo install:*)",
       "Bash(bun add:*)",
       "Bash(curl:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(bunx expo doctor:*)"
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []
@@ -17,5 +15,4 @@
   "enabledMcpjsonServers": [
     "dropbox",
     "raindrop"
-  ]
 }
