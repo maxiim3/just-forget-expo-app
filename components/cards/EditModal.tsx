@@ -1,3 +1,7 @@
+/**
+ * EditModal - Clean solid modal for editing entries
+ */
+
 import { useState, useEffect } from "react";
 import {
   View,
@@ -7,13 +11,18 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  StyleSheet,
 } from "react-native";
 import { useAppStore } from "@/lib/store";
+import { colors, fonts, borderRadius, spacing, shadows } from "@/constants/theme";
 
 export function EditModal() {
   const editingEntry = useAppStore((state) => state.editingEntry);
   const setEditingEntry = useAppStore((state) => state.setEditingEntry);
   const updateEntry = useAppStore((state) => state.updateEntry);
+  const archiveEntry = useAppStore((state) => state.archiveEntry);
+  const deleteEntry = useAppStore((state) => state.deleteEntry);
 
   const [text, setText] = useState("");
 
@@ -37,6 +46,40 @@ export function EditModal() {
     setEditingEntry(null);
   };
 
+  const handleArchive = () => {
+    if (editingEntry) {
+      archiveEntry(editingEntry.id);
+      setEditingEntry(null);
+    }
+  };
+
+  const handleDelete = () => {
+    if (editingEntry) {
+      if (Platform.OS === "web") {
+        if (window.confirm("Delete this thought? This cannot be undone.")) {
+          deleteEntry(editingEntry.id);
+          setEditingEntry(null);
+        }
+      } else {
+        Alert.alert(
+          "Delete thought",
+          "This cannot be undone.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Delete",
+              style: "destructive",
+              onPress: () => {
+                deleteEntry(editingEntry.id);
+                setEditingEntry(null);
+              },
+            },
+          ]
+        );
+      }
+    }
+  };
+
   if (!editingEntry) return null;
 
   return (
@@ -48,41 +91,73 @@ export function EditModal() {
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        style={styles.keyboardView}
       >
-        <View className="flex-1 bg-black/50 items-center justify-center p-6">
-          <View className="w-full max-w-md bg-surface border-4 border-primary rounded-sketchLg p-6">
-            <Text className="font-marker text-2xl text-primary mb-4">
-              Edit thought
-            </Text>
+        <View style={styles.overlay}>
+          <View style={styles.modalContainer}>
+            <View style={[styles.modalContent, shadows.lg]}>
+              <Text style={styles.title}>Edit thought</Text>
 
-            <TextInput
-              className="font-caveat text-xl text-primary bg-background border-2 border-muted rounded-sketch p-4 min-h-[200px]"
-              placeholder="What's on your mind?"
-              placeholderTextColor="#6B6B6B"
-              multiline
-              textAlignVertical="top"
-              value={text}
-              onChangeText={setText}
-              autoFocus
-            />
+              <TextInput
+                style={styles.textInput}
+                placeholder="What's on your mind?"
+                placeholderTextColor={colors.tertiary}
+                multiline
+                textAlignVertical="top"
+                value={text}
+                onChangeText={setText}
+                autoFocus
+              />
 
-            <View className="flex-row gap-3 mt-6">
-              <Pressable
-                className="flex-1 py-3 border-2 border-muted rounded-sketch items-center"
-                onPress={handleCancel}
-              >
-                <Text className="font-caveat text-xl text-secondary">
-                  Cancel
-                </Text>
-              </Pressable>
-              <Pressable
-                className="flex-1 py-3 bg-primary border-2 border-primary rounded-sketch items-center"
-                onPress={handleSave}
-                disabled={!text.trim()}
-              >
-                <Text className="font-caveat text-xl text-surface">Save</Text>
-              </Pressable>
+              {/* Action buttons row */}
+              <View style={styles.buttonRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.actionButton,
+                    styles.archiveButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={handleArchive}
+                >
+                  <Text style={styles.archiveButtonText}>Archive</Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.actionButton,
+                    styles.deleteButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={handleDelete}
+                >
+                  <Text style={styles.deleteButtonText}>Delete</Text>
+                </Pressable>
+              </View>
+
+              {/* Save/Cancel row */}
+              <View style={styles.buttonRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.actionButton,
+                    styles.cancelButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={handleCancel}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.actionButton,
+                    styles.saveButton,
+                    !text.trim() && styles.buttonDisabled,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={handleSave}
+                  disabled={!text.trim()}
+                >
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </View>
@@ -90,3 +165,93 @@ export function EditModal() {
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  keyboardView: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.lg,
+  },
+  modalContainer: {
+    width: "100%",
+    maxWidth: 400,
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+  },
+  title: {
+    fontFamily: fonts.semibold,
+    fontSize: 20,
+    color: colors.primary,
+    marginBottom: spacing.md,
+  },
+  textInput: {
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    color: colors.primary,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    minHeight: 180,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    alignItems: "center",
+  },
+  archiveButton: {
+    backgroundColor: colors.accentLight,
+  },
+  archiveButtonText: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: colors.accent,
+  },
+  deleteButton: {
+    backgroundColor: "#FEE2E2", // Red 100
+  },
+  deleteButtonText: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: colors.error,
+  },
+  cancelButton: {
+    backgroundColor: colors.muted,
+  },
+  cancelButtonText: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: colors.secondary,
+  },
+  saveButton: {
+    backgroundColor: colors.accent,
+  },
+  saveButtonText: {
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: "#FFFFFF",
+  },
+  buttonPressed: {
+    opacity: 0.7,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+});

@@ -1,26 +1,35 @@
 import "../global.css";
 import { useEffect } from "react";
-import { Platform, View, Text } from "react-native";
+import { Platform, View, Text, useColorScheme } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LayoutProvider } from "@/contexts/LayoutContext";
+import { useAppStore } from "@/lib/store";
 import {
   useFonts,
-  Caveat_400Regular,
-  Caveat_500Medium,
-  Caveat_600SemiBold,
-  Caveat_700Bold,
-} from "@expo-google-fonts/caveat";
-import { PermanentMarker_400Regular } from "@expo-google-fonts/permanent-marker";
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from "@expo-google-fonts/space-grotesk";
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    Caveat_400Regular,
-    Caveat_500Medium,
-    Caveat_600SemiBold,
-    Caveat_700Bold,
-    PermanentMarker_400Regular,
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
   });
+
+  const systemColorScheme = useColorScheme();
+  const themeMode = useAppStore((state) => state.themeMode);
+
+  // Determine if we should use dark mode
+  const isDark =
+    themeMode === "dark" || (themeMode === "system" && systemColorScheme === "dark");
 
   // PWA setup on web
   useEffect(() => {
@@ -34,7 +43,7 @@ export default function RootLayout() {
       // Add theme-color meta
       const meta = document.createElement("meta");
       meta.name = "theme-color";
-      meta.content = "#FAF8F5";
+      meta.content = "#F0F4F8";
       document.head.appendChild(meta);
 
       // Register service worker
@@ -49,18 +58,27 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <Text className="text-primary text-lg">Loading...</Text>
+      <View className="flex-1 items-center justify-center bg-background dark:bg-dark-background">
+        <Text className="text-primary dark:text-dark-primary text-lg">Loading...</Text>
       </View>
     );
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <LayoutProvider>
+          <GestureHandlerRootView
+            style={{ flex: 1 }}
+            className={isDark ? "dark" : ""}
+          >
+            <StatusBar style={isDark ? "light" : "dark"} />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          </GestureHandlerRootView>
+        </LayoutProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

@@ -7,7 +7,8 @@
       "Bash(bun add:*)",
       "Bash(curl:*)",
       "Bash(kill:*)",
-      "Bash(bunx tsc:*)"
+      "Bash(bunx tsc:*)",
+      "Skill(ui-ux-pro-max)"
     ],
     "deny": [],
     "ask": []

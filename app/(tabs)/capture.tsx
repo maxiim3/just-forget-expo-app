@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { CardStack, EditModal, SideEditDrawer, SelectionActionBar } from "@/components/cards";
+import { CardStack, EditModal, SelectionActionBar } from "@/components/cards";
 import { CommandInput } from "@/components/command";
+import { OnboardingOverlay } from "@/components/onboarding";
 import { mockEntries } from "@/lib/mockData";
 import { useAppStore } from "@/lib/store";
 import type { ParsedCommand } from "@/lib/commandTypes";
@@ -13,6 +14,8 @@ export default function CaptureScreen() {
   const entries = useAppStore((state) => state.entries);
   const addEntry = useAppStore((state) => state.addEntry);
   const setActiveFilter = useAppStore((state) => state.setActiveFilter);
+  const hasSeenOnboarding = useAppStore((state) => state.hasSeenOnboarding);
+  const setHasSeenOnboarding = useAppStore((state) => state.setHasSeenOnboarding);
 
   // Load mock data on first render
   useEffect(() => {
@@ -48,8 +51,12 @@ export default function CaptureScreen() {
     }
   };
 
+  const handleOnboardingComplete = () => {
+    setHasSeenOnboarding(true);
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-background dark:bg-dark-background" edges={["top"]}>
       <View className="flex-1">
         <CardStack />
       </View>
@@ -57,8 +64,12 @@ export default function CaptureScreen() {
       <CommandInput onSubmit={handleCommand} placeholder="Drop a thought..." />
 
       <EditModal />
-      <SideEditDrawer />
       <SelectionActionBar />
+
+      {/* Show onboarding for first-time users */}
+      {!hasSeenOnboarding && entries.length > 0 && (
+        <OnboardingOverlay onComplete={handleOnboardingComplete} />
+      )}
     </SafeAreaView>
   );
 }

@@ -15,7 +15,7 @@ export function CardStack() {
   const setCurrentCardIndex = useAppStore((state) => state.setCurrentCardIndex);
   const selectedEntryIds = useAppStore((state) => state.selectedEntryIds);
   const toggleSelectedEntry = useAppStore((state) => state.toggleSelectedEntry);
-  const setEditDrawerEntry = useAppStore((state) => state.setEditDrawerEntry);
+  const setEditingEntry = useAppStore((state) => state.setEditingEntry);
 
   // Check if user is actively filtering
   const isFiltering = activeFilter.query.length > 0 || activeFilter.tags.length > 0;
@@ -42,13 +42,13 @@ export function CardStack() {
 
   const handleSwipeRight = useCallback(
     (entryId: string) => {
-      // Open edit drawer
+      // Open edit modal directly
       const entry = activeEntries.find((e) => e.id === entryId);
       if (entry) {
-        setEditDrawerEntry(entry);
+        setEditingEntry(entry);
       }
     },
-    [activeEntries, setEditDrawerEntry]
+    [activeEntries, setEditingEntry]
   );
 
   if (activeEntries.length === 0) {
@@ -56,18 +56,17 @@ export function CardStack() {
       // No search results - show helpful message with clear action
       return (
         <View className="flex-1 items-center justify-center">
-          <Text className="font-marker text-2xl text-secondary mb-2">
+          <Text className="font-sans-semibold text-xl text-secondary dark:text-dark-secondary mb-2">
             No matches found
           </Text>
-          <Text className="font-caveat text-lg text-secondary text-center px-8 mb-6">
+          <Text className="font-sans text-base text-tertiary dark:text-dark-tertiary text-center px-8 mb-6">
             Try different keywords or clear the filter
           </Text>
           <Pressable
             onPress={clearFilter}
-            className="bg-muted border-2 border-secondary px-6 py-3 rounded-sketch"
-            style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+            className="bg-muted/30 dark:bg-dark-muted/30 px-6 py-3 rounded-xl active:opacity-70"
           >
-            <Text className="font-caveat text-lg text-primary">
+            <Text className="font-sans-medium text-base text-primary dark:text-dark-primary">
               Clear filter
             </Text>
           </Pressable>
@@ -78,11 +77,11 @@ export function CardStack() {
     // Truly empty inbox
     return (
       <View className="flex-1 items-center justify-center">
-        <Text className="font-marker text-3xl text-secondary mb-4">
+        <Text className="font-sans-bold text-2xl text-secondary dark:text-dark-secondary mb-4">
           All clear!
         </Text>
-        <Text className="font-caveat text-xl text-secondary text-center px-8">
-          Your inbox is empty. Swipe up from bottom to add a new thought.
+        <Text className="font-sans text-lg text-tertiary dark:text-dark-tertiary text-center px-8">
+          Your inbox is empty. Use the input below to add a thought.
         </Text>
       </View>
     );
@@ -102,7 +101,9 @@ export function CardStack() {
       {/* Gesture hints overlay */}
       {/* Bottom hint */}
       <View className="absolute bottom-20 z-20">
-        <Text className="font-caveat text-lg text-secondary">next</Text>
+        <Text className="font-sans text-sm text-tertiary dark:text-dark-tertiary uppercase tracking-widest">
+          next
+        </Text>
       </View>
 
       {/* Left hint */}
@@ -110,7 +111,9 @@ export function CardStack() {
         className="absolute left-4 z-20"
         style={{ transform: [{ rotate: "-90deg" }] }}
       >
-        <Text className="font-caveat text-lg text-secondary">select</Text>
+        <Text className="font-sans text-sm text-tertiary dark:text-dark-tertiary uppercase tracking-widest">
+          select
+        </Text>
       </View>
 
       {/* Right hint */}
@@ -118,7 +121,9 @@ export function CardStack() {
         className="absolute right-4 z-20"
         style={{ transform: [{ rotate: "90deg" }] }}
       >
-        <Text className="font-caveat text-lg text-secondary">edit</Text>
+        <Text className="font-sans text-sm text-tertiary dark:text-dark-tertiary uppercase tracking-widest">
+          edit
+        </Text>
       </View>
 
       {/* Render cards in reverse order so top card is rendered last (on top) */}
@@ -150,7 +155,7 @@ export function CardStack() {
 
       {/* Card counter */}
       <View className="absolute bottom-8">
-        <Text className="font-caveat text-xl text-secondary">
+        <Text className="font-sans-medium text-sm text-tertiary dark:text-dark-tertiary">
           {currentCardIndex + 1} / {activeEntries.length}
         </Text>
       </View>

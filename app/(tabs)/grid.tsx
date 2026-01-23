@@ -1,25 +1,39 @@
-import { useState } from "react";
+/**
+ * Grid View - Animated grid of all thoughts
+ * Cards explode into position when switching from stack view.
+ */
+
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
   ScrollView,
   Pressable,
-  Dimensions,
+  useWindowDimensions,
   Modal,
   Alert,
+  Platform,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, {
+  useAnimatedStyle,
+  interpolate,
+  withDelay,
+  withSpring,
+  Extrapolation,
+} from "react-native-reanimated";
 import { useAppStore, useFilteredEntries } from "@/lib/store";
+import { useLayout } from "@/contexts/LayoutContext";
 import { EditModal } from "@/components/cards/EditModal";
 import { CommandInput } from "@/components/command";
+import { colors, fonts, borderRadius, spacing, shadows } from "@/constants/theme";
 import type { Entry } from "@/lib/supabase";
 import type { ParsedCommand } from "@/lib/commandTypes";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_GAP = 12;
-const CARD_WIDTH = (SCREEN_WIDTH - 48 - CARD_GAP) / 2;
+const CARD_MIN_WIDTH = 160;
 
-// Format relative time
 const formatRelativeTime = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
@@ -32,40 +46,82 @@ const formatRelativeTime = (dateString: string): string => {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
-function GridCard({
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function AnimatedGridCard({
   entry,
+  index,
+  cardWidth,
   onPress,
   onLongPress,
+  isArchived = false,
 }: {
   entry: Entry;
+  index: number;
+  cardWidth: number;
   onPress: () => void;
   onLongPress: () => void;
+  isArchived?: boolean;
 }) {
+  const { progress, getStaggerDelay } = useLayout();
+  const staggerDelay = getStaggerDelay(index);
+
+  // Animate from center (stacked) to grid position
+  const animatedStyle = useAnimatedStyle(() => {
+    // Scale from 0.8 to 1
+    const scale = interpolate(
+      progress.value,
+      [0, 1],
+      [0.85, 1],
+      Extrapolation.CLAMP
+    );
+
+    // Fade in
+    const opacity = interpolate(
+      progress.value,
+      [0, 0.5, 1],
+      [0, 0.5, 1],
+      Extrapolation.CLAMP
+    );
+
+    // Start from center offset, move to final position
+    const translateY = interpolate(
+      progress.value,
+      [0, 1],
+      [50, 0],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      transform: [{ scale }, { translateY }],
+      opacity,
+    };
+  });
+
   return (
-    <Pressable
-      className="bg-surface border-4 border-primary rounded-sketch p-4"
-      style={({ pressed }) => [
-        { width: CARD_WIDTH, minHeight: 140 },
-        pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+    <AnimatedPressable
+      style={[
+        styles.gridCard,
+        { width: cardWidth },
+        isArchived && styles.gridCardArchived,
+        animatedStyle,
       ]}
       onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={400}
     >
-      <Text
-        className="font-caveat text-lg text-primary leading-tight"
-        numberOfLines={5}
-      >
+      <Text style={styles.cardContent} numberOfLines={5}>
         {entry.content}
       </Text>
-      <Text className="font-caveat text-sm text-secondary mt-auto pt-2">
+      <Text style={styles.cardTimestamp}>
         {formatRelativeTime(entry.updated_at)}
       </Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
 export default function GridScreen() {
+  const { width: screenWidth } = useWindowDimensions();
   const entries = useAppStore((state) => state.entries);
   const setEditingEntry = useAppStore((state) => state.setEditingEntry);
   const archiveEntry = useAppStore((state) => state.archiveEntry);
@@ -77,19 +133,21 @@ export default function GridScreen() {
 
   const [menuEntry, setMenuEntry] = useState<Entry | null>(null);
 
-  // Use filtered entries for display (respects search/filter state)
+  // Responsive grid: calculate columns based on screen width
+  const horizontalPadding = 40; // 20px each side
+  const availableWidth = screenWidth - horizontalPadding;
+  const columns = Math.max(2, Math.floor(availableWidth / (CARD_MIN_WIDTH + CARD_GAP)));
+  const cardWidth = (availableWidth - (columns - 1) * CARD_GAP) / columns;
+
   const filteredEntries = useFilteredEntries();
   const activeEntries = filteredEntries.filter((e) => !e.archived);
-  // For archived, get from all entries since useFilteredEntries excludes archived by default
   const archivedEntries = entries.filter((e) => e.archived);
 
-  // Check if user is actively filtering
   const isFiltering = activeFilter.query.length > 0 || activeFilter.tags.length > 0;
 
   const handleCommand = (command: ParsedCommand) => {
     switch (command.action) {
       case "add":
-        // Create new entry
         const newEntry: Entry = {
           id: crypto.randomUUID(),
           user_id: "local",
@@ -101,14 +159,10 @@ export default function GridScreen() {
         addEntry(newEntry);
         break;
       case "search":
-        // Set filter
         setActiveFilter({ query: command.content, tags: command.tags });
         break;
       case "delete":
-        // Delete selected (handled elsewhere)
-        break;
       case "archive":
-        // Archive selected (handled elsewhere)
         break;
     }
   };
@@ -123,113 +177,113 @@ export default function GridScreen() {
   const handleDelete = () => {
     if (!menuEntry) return;
 
-    Alert.alert(
-      "Delete thought",
-      "Are you sure? This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            deleteEntry(menuEntry.id);
-            setMenuEntry(null);
+    if (Platform.OS === "web") {
+      if (window.confirm("Delete this thought? This cannot be undone.")) {
+        deleteEntry(menuEntry.id);
+        setMenuEntry(null);
+      }
+    } else {
+      Alert.alert(
+        "Delete thought",
+        "Are you sure? This cannot be undone.",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: () => {
+              deleteEntry(menuEntry.id);
+              setMenuEntry(null);
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   return (
     <>
-      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <ScrollView
-        className="flex-1 px-6"
-        contentContainerStyle={{ paddingBottom: 120 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View className="py-4">
-          <Text className="font-marker text-3xl text-primary">All Thoughts</Text>
-          <Text className="font-caveat text-xl text-secondary">
-            {activeEntries.length} active, {archivedEntries.length} archived
-          </Text>
-        </View>
-
-        {/* Active entries grid */}
-        {activeEntries.length > 0 && (
-          <View
-            className="flex-row flex-wrap"
-            style={{ gap: CARD_GAP, paddingBottom: 24 }}
-          >
-            {activeEntries.map((entry) => (
-              <GridCard
-                key={entry.id}
-                entry={entry}
-                onPress={() => setEditingEntry(entry)}
-                onLongPress={() => setMenuEntry(entry)}
-              />
-            ))}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>All Thoughts</Text>
+            <Text style={styles.headerSubtitle}>
+              {activeEntries.length} active · {archivedEntries.length} archived
+            </Text>
           </View>
-        )}
 
-        {/* Archived section */}
-        {archivedEntries.length > 0 && (
-          <>
-            <View className="py-4 border-t-2 border-muted">
-              <Text className="font-marker text-xl text-secondary">
-                Archived
-              </Text>
-            </View>
-            <View
-              className="flex-row flex-wrap opacity-60"
-              style={{ gap: CARD_GAP, paddingBottom: 48 }}
-            >
-              {archivedEntries.map((entry) => (
-                <GridCard
+          {/* Active entries grid */}
+          {activeEntries.length > 0 && (
+            <View style={styles.grid}>
+              {activeEntries.map((entry, index) => (
+                <AnimatedGridCard
                   key={entry.id}
                   entry={entry}
+                  index={index}
+                  cardWidth={cardWidth}
                   onPress={() => setEditingEntry(entry)}
                   onLongPress={() => setMenuEntry(entry)}
                 />
               ))}
             </View>
-          </>
-        )}
+          )}
 
-        {/* Empty state - no search results */}
-        {isFiltering && activeEntries.length === 0 && (
-          <View className="flex-1 items-center justify-center py-20">
-            <Text className="font-marker text-2xl text-secondary mb-2">
-              No matches found
-            </Text>
-            <Text className="font-caveat text-lg text-secondary text-center px-4 mb-6">
-              Try different keywords or clear the filter
-            </Text>
-            <Pressable
-              onPress={clearFilter}
-              className="bg-muted border-2 border-secondary px-6 py-3 rounded-sketch"
-              style={({ pressed }) => [pressed && { opacity: 0.7 }]}
-            >
-              <Text className="font-caveat text-lg text-primary">
-                Clear filter
+          {/* Archived section */}
+          {archivedEntries.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Archived</Text>
+              </View>
+              <View style={styles.grid}>
+                {archivedEntries.map((entry, index) => (
+                  <AnimatedGridCard
+                    key={entry.id}
+                    entry={entry}
+                    index={activeEntries.length + index}
+                    cardWidth={cardWidth}
+                    onPress={() => setEditingEntry(entry)}
+                    onLongPress={() => setMenuEntry(entry)}
+                    isArchived
+                  />
+                ))}
+              </View>
+            </>
+          )}
+
+          {/* Empty state - no search results */}
+          {isFiltering && activeEntries.length === 0 && (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No matches found</Text>
+              <Text style={styles.emptySubtitle}>
+                Try different keywords or clear the filter
               </Text>
-            </Pressable>
-          </View>
-        )}
+              <Pressable
+                onPress={clearFilter}
+                style={({ pressed }) => [
+                  styles.clearFilterButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.clearFilterText}>Clear filter</Text>
+              </Pressable>
+            </View>
+          )}
 
-        {/* Empty state - truly empty */}
-        {!isFiltering && entries.length === 0 && (
-          <View className="flex-1 items-center justify-center py-20">
-            <Text className="font-marker text-2xl text-secondary mb-2">
-              No thoughts yet
-            </Text>
-            <Text className="font-caveat text-xl text-secondary text-center">
-              Go to Swipe to add your first thought
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+          {/* Empty state - truly empty */}
+          {!isFiltering && entries.length === 0 && (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No thoughts yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Go to Swipe to add your first thought
+              </Text>
+            </View>
+          )}
+        </ScrollView>
       </SafeAreaView>
 
       <CommandInput onSubmit={handleCommand} placeholder="Drop a thought..." />
@@ -244,28 +298,28 @@ export default function GridScreen() {
         onRequestClose={() => setMenuEntry(null)}
       >
         <Pressable
-          className="flex-1 bg-black/50 items-center justify-center"
+          style={styles.menuOverlay}
           onPress={() => setMenuEntry(null)}
         >
-          <View className="bg-surface border-4 border-primary rounded-sketchLg p-4 min-w-[200px]">
-            <Text className="font-marker text-lg text-primary mb-3 text-center">
-              Actions
-            </Text>
+          <View style={styles.menuContent}>
             <Pressable
-              className="py-3 px-4 border-2 border-muted rounded-sketch mb-2"
+              style={({ pressed }) => [
+                styles.menuButton,
+                pressed && styles.menuButtonPressed,
+              ]}
               onPress={handleArchive}
             >
-              <Text className="font-caveat text-xl text-primary text-center">
-                📦 Archive
-              </Text>
+              <Text style={styles.menuButtonText}>Archive</Text>
             </Pressable>
+            <View style={styles.menuDivider} />
             <Pressable
-              className="py-3 px-4 bg-red-100 border-2 border-red-400 rounded-sketch"
+              style={({ pressed }) => [
+                styles.menuButton,
+                pressed && styles.menuButtonPressed,
+              ]}
               onPress={handleDelete}
             >
-              <Text className="font-caveat text-xl text-red-600 text-center">
-                🗑️ Delete
-              </Text>
+              <Text style={[styles.menuButtonText, styles.menuButtonTextDanger]}>Delete</Text>
             </Pressable>
           </View>
         </Pressable>
@@ -273,3 +327,144 @@ export default function GridScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  scrollContent: {
+    paddingBottom: 200, // Room for input + floating tab bar
+  },
+  header: {
+    paddingVertical: 20,
+  },
+  headerTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 24,
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: colors.secondary,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: CARD_GAP,
+    paddingBottom: 24,
+  },
+  gridCard: {
+    minHeight: 140,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  gridCardArchived: {
+    opacity: 0.6,
+  },
+  cardContent: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: colors.primary,
+    lineHeight: 20,
+    flex: 1,
+  },
+  cardTimestamp: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: colors.tertiary,
+    marginTop: spacing.sm,
+  },
+  sectionHeader: {
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  sectionTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    color: colors.tertiary,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 80,
+  },
+  emptyTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 20,
+    color: colors.secondary,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    color: colors.tertiary,
+    textAlign: "center",
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  clearFilterButton: {
+    backgroundColor: colors.muted,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: borderRadius.lg,
+  },
+  clearFilterText: {
+    fontFamily: fonts.medium,
+    fontSize: 16,
+    color: colors.primary,
+  },
+  buttonPressed: {
+    opacity: 0.7,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: colors.overlay,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  menuContent: {
+    minWidth: 160,
+    backgroundColor: Platform.OS === "web"
+      ? "rgba(255, 255, 255, 0.95)"
+      : colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.06)",
+    overflow: "hidden",
+    ...(Platform.OS === "web" && {
+      backdropFilter: "blur(20px)",
+      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.16)",
+    }),
+  },
+  menuButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  menuButtonPressed: {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+  },
+  menuButtonText: {
+    fontFamily: fonts.medium,
+    fontSize: 14,
+    color: colors.primary,
+  },
+  menuButtonTextDanger: {
+    color: colors.error,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+  },
+});

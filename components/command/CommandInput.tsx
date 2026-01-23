@@ -1,30 +1,12 @@
 /**
- * CommandInput - Main unified command input component
- *
- * Composes HighlightedTextInput, CommandChip, and VoiceButton into a
- * complete command input interface. Fixed at the bottom of the screen
- * with proper keyboard handling and safe area support.
- *
- * Layout:
- * ┌─────────────────────────────────────────────────┐
- * │  [Searching...]  [#work]  [#urgent]         [×] │  <- CommandChip
- * ├─────────────────────────────────────────────────┤
- * │  [search #work meeting tomorrow        ] [mic] │  <- Input row
- * └─────────────────────────────────────────────────┘
- *
- * @example
- * <CommandInput
- *   onSubmit={(parsed) => {
- *     if (parsed.action === 'add') {
- *       store.addEntry(parsed.content);
- *     }
- *   }}
- * />
+ * CommandInput - Clean, minimal command input
  */
 
 import { useState, useCallback } from "react";
 import {
   View,
+  Text,
+  Pressable,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -33,19 +15,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HighlightedTextInput } from "./HighlightedTextInput";
 import { CommandChip } from "./CommandChip";
+import { CommandHelp } from "./CommandHelp";
 import { VoiceButton } from "./VoiceButton";
 import { parseCommand } from "@/lib/commandParser";
 import type { ParsedCommand } from "@/lib/commandTypes";
-import { colors, spacing, borderRadius } from "@/constants/theme";
+import { colors, spacing, borderRadius, shadows, fonts } from "@/constants/theme";
 
 interface CommandInputProps {
-  /** Called when user submits the command (press enter/send) */
   onSubmit: (command: ParsedCommand) => void;
-  /** Initial text value for the input */
   initialValue?: string;
-  /** Placeholder text when input is empty */
   placeholder?: string;
-  /** Auto-focus the input on mount */
   autoFocus?: boolean;
 }
 
@@ -56,9 +35,9 @@ export function CommandInput({
   autoFocus = false,
 }: CommandInputProps) {
   const [text, setText] = useState(initialValue);
+  const [showHelp, setShowHelp] = useState(false);
   const insets = useSafeAreaInsets();
 
-  // Parse on every keystroke for real-time highlighting
   const parsed = parseCommand(text);
 
   const handleSubmit = useCallback(() => {
@@ -66,7 +45,7 @@ export function CommandInput({
     if (!trimmed) return;
 
     onSubmit(parsed);
-    setText(""); // Clear after submit
+    setText("");
   }, [text, parsed, onSubmit]);
 
   const handleClear = useCallback(() => {
@@ -77,36 +56,48 @@ export function CommandInput({
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
       <View
         style={[
           styles.wrapper,
-          { paddingBottom: Math.max(insets.bottom, spacing.sm) },
+          { paddingBottom: Math.max(insets.bottom, spacing.md) + 88 }, // Clear floating tab bar (48 + 24 + 16)
         ]}
       >
-        {/* Command chip row - shows action state and tags */}
-        <CommandChip
-          action={parsed.action}
-          tags={parsed.tags}
-          onClear={handleClear}
-        />
+        <View style={[styles.inputContainer, shadows.md]}>
+          {/* Command chip row */}
+          <CommandChip
+            action={parsed.action}
+            tags={parsed.tags}
+            onClear={handleClear}
+          />
 
-        {/* Input row with text input and voice button */}
-        <View style={styles.inputRow}>
-          <View style={styles.inputWrapper}>
-            <HighlightedTextInput
-              value={text}
-              onChangeText={setText}
-              onSubmitEditing={handleSubmit}
-              tokens={parsed.tokens}
-              placeholder={placeholder}
-              autoFocus={autoFocus}
-            />
+          {/* Input row */}
+          <View style={styles.inputRow}>
+            <Pressable
+              onPress={() => setShowHelp(true)}
+              style={styles.helpButton}
+              accessibilityRole="button"
+              accessibilityLabel="Show command syntax help"
+            >
+              <Text style={styles.helpButtonText}>?</Text>
+            </Pressable>
+
+            <View style={styles.inputWrapper}>
+              <HighlightedTextInput
+                value={text}
+                onChangeText={setText}
+                onSubmitEditing={handleSubmit}
+                tokens={parsed.tokens}
+                placeholder={placeholder}
+                autoFocus={autoFocus}
+              />
+            </View>
+            <VoiceButton />
           </View>
-          <VoiceButton />
         </View>
       </View>
+
+      <CommandHelp visible={showHelp} onClose={() => setShowHelp(false)} />
     </KeyboardAvoidingView>
   );
 }
@@ -117,23 +108,28 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    alignItems: "center",
   },
   wrapper: {
-    backgroundColor: colors.surface,
+    width: "100%",
+    maxWidth: 560,
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingHorizontal: spacing.md,
-    // Subtle shadow for visual separation from content
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    // Android elevation
-    elevation: 8,
-    // Top border for additional separation
-    borderTopWidth: 1,
-    borderTopColor: colors.muted,
-    borderTopLeftRadius: borderRadius.sketch,
-    borderTopRightRadius: borderRadius.sketch,
+  },
+  inputContainer: {
+    backgroundColor: Platform.OS === "web"
+      ? "rgba(255, 255, 255, 0.85)"
+      : colors.surface,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.06)",
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    // Web glassmorphism
+    ...(Platform.OS === "web" && {
+      backdropFilter: "blur(20px)",
+      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+    }),
   },
   inputRow: {
     flexDirection: "row",
@@ -142,5 +138,18 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     flex: 1,
+  },
+  helpButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.muted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  helpButtonText: {
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    color: colors.secondary,
   },
 });

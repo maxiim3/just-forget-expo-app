@@ -41,8 +41,6 @@ interface AppState {
   setCurrentCardIndex: (index: number) => void;
   editingEntry: Entry | null;
   setEditingEntry: (entry: Entry | null) => void;
-  editDrawerEntry: Entry | null;
-  setEditDrawerEntry: (entry: Entry | null) => void;
 
   // Command/Filter state
   commandInput: string;
@@ -50,6 +48,20 @@ interface AppState {
   activeFilter: FilterState;
   setActiveFilter: (filter: Partial<FilterState>) => void;
   clearFilter: () => void;
+
+  // Loading/Error state (for async operations)
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  loadError: string | null;
+  setLoadError: (error: string | null) => void;
+
+  // Onboarding state
+  hasSeenOnboarding: boolean;
+  setHasSeenOnboarding: (seen: boolean) => void;
+
+  // Theme state
+  themeMode: "system" | "light" | "dark";
+  setThemeMode: (mode: "system" | "light" | "dark") => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -119,8 +131,6 @@ export const useAppStore = create<AppState>((set) => ({
   setCurrentCardIndex: (index) => set({ currentCardIndex: index }),
   editingEntry: null,
   setEditingEntry: (entry) => set({ editingEntry: entry }),
-  editDrawerEntry: null,
-  setEditDrawerEntry: (entry) => set({ editDrawerEntry: entry }),
 
   // Command/Filter state
   commandInput: "",
@@ -133,11 +143,27 @@ export const useAppStore = create<AppState>((set) => ({
   setActiveFilter: (filter) =>
     set((state) => ({
       activeFilter: { ...state.activeFilter, ...filter },
+      currentCardIndex: 0, // Reset to first card when filter changes
     })),
   clearFilter: () =>
     set({
       activeFilter: { query: "", tags: [], showArchived: false },
+      currentCardIndex: 0, // Reset to first card when filter clears
     }),
+
+  // Loading/Error state
+  isLoading: false,
+  setIsLoading: (loading) => set({ isLoading: loading }),
+  loadError: null,
+  setLoadError: (error) => set({ loadError: error }),
+
+  // Onboarding state
+  hasSeenOnboarding: false,
+  setHasSeenOnboarding: (seen) => set({ hasSeenOnboarding: seen }),
+
+  // Theme state
+  themeMode: "system",
+  setThemeMode: (mode) => set({ themeMode: mode }),
 }));
 
 /**

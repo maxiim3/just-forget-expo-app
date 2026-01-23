@@ -1,79 +1,40 @@
 /**
  * HighlightedTextInput - TextInput with syntax highlighting overlay
- *
- * Uses the overlay technique to achieve syntax highlighting in React Native:
- * 1. TextInput with transparent text (cursor remains visible)
- * 2. Absolutely positioned Text overlay with colored spans
- * 3. Overlay has pointerEvents="none" to pass touches to TextInput
- *
- * @example
- * const [text, setText] = useState('');
- * const tokens = tokenize(text);
- * <HighlightedTextInput
- *   value={text}
- *   onChangeText={setText}
- *   tokens={tokens}
- *   placeholder="Type a command..."
- * />
  */
 
 import { View, TextInput, Text, StyleSheet } from "react-native";
 import type { Token, TokenType } from "@/lib/commandTypes";
-import { colors, fonts } from "@/constants/theme";
+import { colors, fonts, borderRadius } from "@/constants/theme";
 
-/**
- * Color mapping for each token type.
- * Matches the design system colors.
- */
 const TOKEN_COLORS: Record<TokenType, string> = {
-  action: colors.accent, // #FF6B6B - command keywords
-  tag: colors.success, // #16A34A - #hashtags
-  date: "#3B82F6", // blue - date keywords
-  text: colors.primary, // #2D2D2D - regular text
+  action: "#2563EB",   // Blue 600
+  tag: "#16A34A",      // Green 600
+  date: "#7C3AED",     // Violet 600
+  text: colors.primary,
 };
 
 interface HighlightedTextInputProps {
-  /** Current input value */
   value: string;
-  /** Called when text changes */
   onChangeText: (text: string) => void;
-  /** Called when user presses submit/enter */
   onSubmitEditing?: () => void;
-  /** Placeholder text when input is empty */
   placeholder?: string;
-  /** Tokens from commandParser for syntax highlighting */
   tokens: Token[];
-  /** Auto-focus the input on mount */
   autoFocus?: boolean;
 }
 
-/**
- * Represents a segment of text to render with a specific color.
- * Covers the entire input string with no gaps.
- */
 interface ColorSegment {
   text: string;
   color: string;
   key: string;
 }
 
-/**
- * Builds an array of colored segments covering the full input string.
- * Fills gaps between tokens with the default text color.
- *
- * @param input - Full input string
- * @param tokens - Parsed tokens with position info
- * @returns Array of segments for rendering
- */
 function buildColorSegments(input: string, tokens: Token[]): ColorSegment[] {
   if (!input) return [];
 
   const segments: ColorSegment[] = [];
   let currentPos = 0;
 
-  // Tokens should already be sorted by start position from parser
   for (const token of tokens) {
-    // Fill gap before this token with default text color
     if (token.start > currentPos) {
       const gapText = input.slice(currentPos, token.start);
       segments.push({
@@ -83,7 +44,6 @@ function buildColorSegments(input: string, tokens: Token[]): ColorSegment[] {
       });
     }
 
-    // Add the token with its color
     segments.push({
       text: token.raw,
       color: TOKEN_COLORS[token.type],
@@ -93,7 +53,6 @@ function buildColorSegments(input: string, tokens: Token[]): ColorSegment[] {
     currentPos = token.end;
   }
 
-  // Fill any remaining text after the last token
   if (currentPos < input.length) {
     segments.push({
       text: input.slice(currentPos),
@@ -117,7 +76,7 @@ export function HighlightedTextInput({
 
   return (
     <View style={styles.container}>
-      {/* Syntax highlighting overlay - renders colored text */}
+      {/* Syntax highlighting overlay */}
       <View style={styles.overlay} pointerEvents="none">
         <Text style={styles.overlayText}>
           {segments.map((segment) => (
@@ -128,23 +87,21 @@ export function HighlightedTextInput({
         </Text>
       </View>
 
-      {/* Actual TextInput - transparent text but visible cursor */}
+      {/* Actual TextInput */}
       <TextInput
         style={styles.input}
         value={value}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmitEditing}
         placeholder={placeholder}
-        placeholderTextColor={colors.secondary}
-        selectionColor={colors.primary}
+        placeholderTextColor={colors.tertiary}
+        selectionColor={colors.accent}
         returnKeyType="send"
         blurOnSubmit={false}
         autoFocus={autoFocus}
         autoCapitalize="none"
         autoCorrect={false}
         accessibilityLabel="Command input"
-        accessibilityHint="Type a command with hashtags, dates, or action keywords"
-        // Web: ensure Enter triggers submit
         onKeyPress={(e) => {
           if (e.nativeEvent.key === "Enter" && onSubmitEditing) {
             e.preventDefault?.();
@@ -156,50 +113,32 @@ export function HighlightedTextInput({
   );
 }
 
-/**
- * Styles using StyleSheet for performance.
- * TextInput and overlay share identical dimensions and font settings
- * to ensure perfect alignment of the overlay text with the cursor.
- */
 const styles = StyleSheet.create({
   container: {
     position: "relative",
   },
   input: {
-    // Transparent text - cursor remains visible
     color: "transparent",
-    // Typography - must match overlay exactly
-    fontFamily: fonts.caveat,
-    fontSize: 20,
-    // Spacing
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    // Visual styling
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderRadius: 16, // rounded-sketch
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "transparent",
   },
   overlay: {
-    // Position over the TextInput
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    // Match TextInput padding exactly
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    // Don't capture touches
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     pointerEvents: "none",
-    // Ensure overlay doesn't affect layout
     justifyContent: "center",
   },
   overlayText: {
-    // Typography - must match input exactly
-    fontFamily: fonts.caveat,
-    fontSize: 20,
-    // Prevent wrapping differences
+    fontFamily: fonts.regular,
+    fontSize: 16,
     flexShrink: 0,
   },
 });

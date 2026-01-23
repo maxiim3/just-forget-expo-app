@@ -1,4 +1,9 @@
-import { View } from "react-native";
+/**
+ * PassedCardsStack - Shows the last passed card at the bottom
+ * Swipe up to go back to previous card
+ */
+
+import { View, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -10,7 +15,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { SwipeCard } from "./SwipeCard";
 import { useAppStore } from "@/lib/store";
-import { cardDimensions } from "@/constants/theme";
+import { cardDimensions, fonts, borderRadius, colors } from "@/constants/theme";
 
 const SWIPE_THRESHOLD = 40;
 const VELOCITY_THRESHOLD = 300;
@@ -76,58 +81,17 @@ export function PassedCardsStack() {
   if (!lastPassedCard) return null;
 
   return (
-    <View
-      style={{
-        position: "absolute",
-        // Position so card is mostly off-screen, only head visible
-        bottom: -HIDDEN_PORTION,
-        left: 0,
-        right: 0,
-        alignItems: "center",
-        zIndex: 50,
-      }}
-    >
+    <View style={[styles.container, { bottom: -HIDDEN_PORTION }]}>
       <GestureDetector gesture={panGesture}>
         <Animated.View style={animatedStyle}>
-          {/* Full card - not clipped */}
-          <View
-            style={{
-              width: cardDimensions.width,
-              height: cardDimensions.height,
-              borderRadius: 16,
-              overflow: "hidden",
-            }}
-          >
+          <View style={styles.cardWrapper}>
             <SwipeCard
               entry={lastPassedCard}
               isSelected={selectedEntryIds.has(lastPassedCard.id)}
             />
             {/* Swipe up overlay */}
-            <Animated.View
-              style={[
-                {
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  borderRadius: 16,
-                  backgroundColor: "rgba(45, 45, 45, 0.9)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                },
-                overlayStyle,
-              ]}
-            >
-              <Animated.Text
-                style={{
-                  fontFamily: "PermanentMarker_400Regular",
-                  fontSize: 24,
-                  color: "#FFFFFF",
-                }}
-              >
-                Prev
-              </Animated.Text>
+            <Animated.View style={[styles.overlay, overlayStyle]}>
+              <Animated.Text style={styles.overlayText}>Prev</Animated.Text>
             </Animated.View>
           </View>
         </Animated.View>
@@ -135,3 +99,37 @@ export function PassedCardsStack() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 50,
+  },
+  cardWrapper: {
+    width: cardDimensions.width,
+    height: cardDimensions.height,
+    borderRadius: borderRadius.lg,
+    overflow: "hidden",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: borderRadius.lg,
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  overlayText: {
+    fontFamily: fonts.semibold,
+    fontSize: 20,
+    color: "#FFFFFF",
+    textTransform: "uppercase",
+    letterSpacing: 2,
+  },
+});

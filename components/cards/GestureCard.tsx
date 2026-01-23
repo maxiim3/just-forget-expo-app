@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Platform } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -9,9 +9,8 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from "react-native-reanimated";
-import { cardDimensions, gestureConfig } from "@/constants/theme";
+import { cardDimensions, gestureConfig, borderRadius, fonts, colors } from "@/constants/theme";
 
-// Use centralized gesture configuration
 const { swipeThreshold, velocityThreshold, directionLockRatio, spring, rotation } = gestureConfig;
 
 interface GestureCardProps {
@@ -36,7 +35,6 @@ function determineSwipeDirection(
   const absX = Math.abs(translationX);
   const absY = Math.abs(translationY);
 
-  // Check if minimum threshold met (either distance or velocity)
   const meetsDistanceThreshold =
     absX >= swipeThreshold || absY >= swipeThreshold;
   const meetsVelocityThreshold =
@@ -47,21 +45,17 @@ function determineSwipeDirection(
     return null;
   }
 
-  // Determine primary direction using ratio
   const total = absX + absY;
   if (total === 0) return null;
 
   const horizontalRatio = absX / total;
 
   if (horizontalRatio > directionLockRatio) {
-    // Horizontal swipe
     return translationX > 0 ? "right" : "left";
   } else if (horizontalRatio < 1 - directionLockRatio) {
-    // Vertical swipe
     return translationY > 0 ? "down" : "up";
   }
 
-  // Diagonal - no action
   return null;
 }
 
@@ -101,7 +95,6 @@ export function GestureCard({
     .onUpdate((event) => {
       translateX.value = event.translationX;
       translateY.value = event.translationY;
-      // Slight rotation based on horizontal movement
       cardRotation.value = interpolate(
         event.translationX,
         [-rotation.translationRange, 0, rotation.translationRange],
@@ -120,17 +113,14 @@ export function GestureCard({
         runOnJS(handleSwipe)(direction);
       }
 
-      // Spring back to original position with tuned feel
       translateX.value = withSpring(0, spring);
       translateY.value = withSpring(0, spring);
       cardRotation.value = withSpring(0, spring);
     });
 
   const animatedCardStyle = useAnimatedStyle(() => {
-    // Stack depth visualization for non-active cards
     const stackOffsetY = -stackPosition * cardDimensions.stackOffset;
     const stackScale = Math.pow(cardDimensions.stackScale, stackPosition);
-    // Smooth exponential fade for 10 visible cards (never fully disappear)
     const stackOpacity = Math.pow(cardDimensions.opacityBase, stackPosition);
 
     if (!isActive) {
@@ -155,7 +145,7 @@ export function GestureCard({
     };
   });
 
-  // Overlay styles - fade in based on swipe direction
+  // Overlay styles with high opacity for readability
   const overlayRightStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translateX.value,
@@ -183,39 +173,27 @@ export function GestureCard({
     ),
   }));
 
-  const overlayUpStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      translateY.value,
-      [0, -swipeThreshold],
-      [0, 1],
-      Extrapolation.CLAMP
-    ),
-  }));
-
   return (
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[styles.cardContainer, animatedCardStyle]}>
         {children}
 
-        {/* Swipe overlays - only show on active card */}
         {isActive && (
           <>
-            {/* Right overlay - Edit */}
+            {/* Right overlay - Edit (Blue) */}
             <Animated.View style={[styles.overlay, styles.overlayEdit, overlayRightStyle]}>
-              <Text style={styles.overlayText}>Edit</Text>
+              <Text style={styles.overlayText}>EDIT</Text>
             </Animated.View>
 
-            {/* Left overlay - Select/Unselect */}
+            {/* Left overlay - Select (Green) */}
             <Animated.View style={[styles.overlay, styles.overlaySelect, overlayLeftStyle]}>
-              <Text style={styles.overlayText}>{isSelected ? "Unselect" : "Select"}</Text>
+              <Text style={styles.overlayText}>{isSelected ? "UNSELECT" : "SELECT"}</Text>
             </Animated.View>
 
-            {/* Down overlay - Next */}
+            {/* Down overlay - Next (Black) */}
             <Animated.View style={[styles.overlay, styles.overlayNext, overlayDownStyle]}>
-              <Text style={styles.overlayText}>Next</Text>
+              <Text style={styles.overlayText}>NEXT</Text>
             </Animated.View>
-
-            {/* Up overlay - Disabled (prev is handled by bottom card) */}
           </>
         )}
       </Animated.View>
@@ -233,25 +211,37 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     alignItems: "center",
     justifyContent: "center",
+    // Glassmorphism base
+    ...(Platform.OS === "web" && {
+      backdropFilter: "blur(16px)",
+    }),
   },
   overlayEdit: {
-    backgroundColor: "rgba(22, 163, 74, 0.9)", // success green
+    // Soft blue tint glassmorphism
+    backgroundColor: Platform.OS === "web"
+      ? "rgba(59, 130, 246, 0.25)"  // Blue 500 with low opacity
+      : "rgba(59, 130, 246, 0.85)",
   },
   overlaySelect: {
-    backgroundColor: "rgba(255, 107, 107, 0.9)", // accent red
+    // Soft green tint glassmorphism
+    backgroundColor: Platform.OS === "web"
+      ? "rgba(34, 197, 94, 0.25)"   // Green 500 with low opacity
+      : "rgba(34, 197, 94, 0.85)",
   },
   overlayNext: {
-    backgroundColor: "rgba(45, 45, 45, 0.9)", // primary dark
-  },
-  overlayPrev: {
-    backgroundColor: "rgba(45, 45, 45, 0.9)", // primary dark
+    // Soft dark glassmorphism
+    backgroundColor: Platform.OS === "web"
+      ? "rgba(15, 23, 42, 0.35)"    // Slate 900 with low opacity
+      : "rgba(15, 23, 42, 0.90)",
   },
   overlayText: {
-    fontFamily: "PermanentMarker_400Regular",
-    fontSize: 32,
-    color: "#FFFFFF",
+    fontFamily: fonts.semibold,
+    fontSize: 16,
+    color: Platform.OS === "web" ? colors.primary : "#FFFFFF",
+    letterSpacing: 2,
+    textTransform: "uppercase",
   },
 });

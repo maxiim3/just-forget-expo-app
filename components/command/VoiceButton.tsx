@@ -1,16 +1,11 @@
 /**
- * VoiceButton Component
- *
- * Placeholder button for future voice input feature (Epic 3).
- * Currently displays a disabled microphone icon that shows a "Coming Soon" alert.
+ * VoiceButton - Clean voice input placeholder
  */
 
 import { Pressable, Text, Alert, StyleSheet } from "react-native";
-
-import { colors, borderRadius, spacing } from "@/constants/theme";
+import { colors, borderRadius } from "@/constants/theme";
 
 interface VoiceButtonProps {
-  /** Button is always disabled for now - voice input coming in Epic 3 */
   disabled?: boolean;
 }
 
@@ -39,19 +34,17 @@ export function VoiceButton({ disabled = true }: VoiceButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     backgroundColor: colors.muted,
-    borderWidth: 1,
-    borderColor: colors.secondary,
     borderRadius: borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },
   disabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   icon: {
-    fontSize: 20,
+    fontSize: 18,
   },
 });

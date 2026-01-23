@@ -1,10 +1,11 @@
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
 import { useAppStore } from "@/lib/store";
+import { colors, fonts, borderRadius, spacing } from "@/constants/theme";
 
 export function SelectionActionBar() {
   const selectedEntryIds = useAppStore((state) => state.selectedEntryIds);
@@ -18,65 +19,117 @@ export function SelectionActionBar() {
     return {
       transform: [
         {
-          translateY: withSpring(count > 0 ? 0 : 100, {
-            damping: 20,
-            stiffness: 90,
+          translateY: withSpring(count > 0 ? 0 : 60, {
+            damping: 25,
+            stiffness: 120,
           }),
         },
       ],
-      opacity: withTiming(count > 0 ? 1 : 0, { duration: 200 }),
+      opacity: withTiming(count > 0 ? 1 : 0, { duration: 150 }),
     };
   });
 
   if (count === 0) return null;
 
   return (
-    <Animated.View
-      style={[animatedStyle]}
-      className="absolute bottom-24 left-4 right-4 bg-surface border-4 border-primary rounded-sketch p-4 shadow-lg"
-    >
-      {/* Header with count and close */}
-      <View className="flex-row items-center justify-between mb-4">
-        <Text className="font-marker text-xl text-primary">
-          {count} selected
-        </Text>
-        <Pressable
-          onPress={clearSelection}
-          className="w-8 h-8 bg-muted rounded-full items-center justify-center"
-        >
-          <Text className="text-secondary text-lg">×</Text>
-        </Pressable>
-      </View>
+    <Animated.View style={[styles.container, animatedStyle]}>
+      <View style={styles.bar}>
+        {/* Count */}
+        <Text style={styles.countText}>{count} selected</Text>
 
-      {/* Action buttons */}
-      <View className="flex-row gap-3">
-        {/* Archive */}
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Actions */}
         <Pressable
           onPress={archiveSelected}
-          className="flex-1 py-3 bg-accent/20 border-2 border-accent rounded-sketch items-center active:opacity-80"
+          style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
         >
-          <Text className="font-caveat text-lg text-accent">Archive</Text>
+          <Text style={styles.actionText}>Archive</Text>
         </Pressable>
 
-        {/* Delete */}
         <Pressable
           onPress={deleteSelected}
-          className="flex-1 py-3 bg-red-100 border-2 border-red-500 rounded-sketch items-center active:opacity-80"
+          style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
         >
-          <Text className="font-caveat text-lg text-red-500">Delete</Text>
+          <Text style={[styles.actionText, styles.actionTextDanger]}>Delete</Text>
         </Pressable>
 
-        {/* Tags (stubbed) */}
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Close */}
         <Pressable
-          onPress={() => {
-            // TODO: Implement tag picker
-            console.log("Tags feature coming soon");
-          }}
-          className="flex-1 py-3 bg-muted border-2 border-secondary rounded-sketch items-center active:opacity-80"
+          onPress={clearSelection}
+          style={({ pressed }) => [styles.closeButton, pressed && styles.actionPressed]}
         >
-          <Text className="font-caveat text-lg text-secondary">Tags</Text>
+          <Text style={styles.closeText}>×</Text>
         </Pressable>
       </View>
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    position: "absolute",
+    bottom: 160, // Above input and tab bar
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  bar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Platform.OS === "web"
+      ? "rgba(15, 23, 42, 0.90)" // Slate 900
+      : colors.accent,
+    borderRadius: borderRadius.full,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    gap: 8,
+    ...(Platform.OS === "web" && {
+      backdropFilter: "blur(20px)",
+      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.24)",
+    }),
+  },
+  countText: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: "#FFFFFF",
+    letterSpacing: 0.2,
+  },
+  divider: {
+    width: 1,
+    height: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+  },
+  action: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.md,
+  },
+  actionPressed: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  },
+  actionText: {
+    fontFamily: fonts.medium,
+    fontSize: 13,
+    color: "#FFFFFF",
+  },
+  actionTextDanger: {
+    color: "#FCA5A5", // Red 300
+  },
+  closeButton: {
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 12,
+  },
+  closeText: {
+    fontFamily: fonts.medium,
+    fontSize: 18,
+    color: "rgba(255, 255, 255, 0.7)",
+  },
+});

@@ -1,6 +1,6 @@
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import type { Entry } from "@/lib/supabase";
-import { cardDimensions } from "@/constants/theme";
+import { cardDimensions, colors, shadows, borderRadius, fonts } from "@/constants/theme";
 
 interface SwipeCardProps {
   entry: Entry;
@@ -38,51 +38,112 @@ export function SwipeCard({ entry, isSelected = false }: SwipeCardProps) {
 
   return (
     <View
-      className={`bg-surface border-4 rounded-sketch p-6 shadow-lg ${
-        isSelected ? "border-accent" : "border-primary"
-      }`}
-      style={{
-        width: cardDimensions.width,
-        height: cardDimensions.height,
-      }}
+      style={[
+        styles.card,
+        shadows.md,
+        isSelected && styles.cardSelected,
+      ]}
     >
       {/* Selection indicator */}
       {isSelected && (
-        <View className="absolute top-4 right-4 w-8 h-8 bg-accent rounded-full items-center justify-center z-10">
-          <Text className="text-white text-lg">✓</Text>
+        <View style={styles.checkmark}>
+          <Text style={styles.checkmarkText}>✓</Text>
         </View>
       )}
 
-      {/* Content type indicator */}
-      <View className="flex-row items-center mb-4">
+      {/* Content type indicator and timestamp */}
+      <View style={styles.header}>
         <View
-          className={`px-3 py-1 rounded-full border-2 border-primary ${
-            contentType === "link"
-              ? "bg-accent/20"
-              : contentType === "list"
-              ? "bg-success/20"
-              : "bg-muted"
-          }`}
+          style={[
+            styles.badge,
+            contentType === "link" && styles.badgeLink,
+            contentType === "list" && styles.badgeList,
+          ]}
         >
-          <Text className="font-caveat text-sm text-primary">
-            {contentType === "link" ? "link" : contentType === "list" ? "list" : "note"}
+          <Text style={styles.badgeText}>
+            {contentType.toUpperCase()}
           </Text>
         </View>
-        <Text className="font-caveat text-secondary ml-auto text-lg">
-          {relativeTime}
-        </Text>
+        <Text style={styles.timestamp}>{relativeTime}</Text>
       </View>
 
       {/* Main content */}
-      <View className="flex-1">
-        <Text
-          className="font-caveat text-2xl text-primary leading-relaxed"
-          numberOfLines={12}
-        >
+      <View style={styles.content}>
+        <Text style={styles.contentText} numberOfLines={14}>
           {entry.content}
         </Text>
       </View>
-
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    width: cardDimensions.width,
+    height: cardDimensions.height,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
+  },
+  cardSelected: {
+    borderWidth: 2,
+    borderColor: colors.accent,
+  },
+  checkmark: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    width: 28,
+    height: 28,
+    backgroundColor: colors.accent,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+  },
+  checkmarkText: {
+    color: colors.surface,
+    fontSize: 14,
+    fontFamily: fonts.semibold,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  badge: {
+    backgroundColor: colors.muted,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+  },
+  badgeLink: {
+    backgroundColor: colors.accentLight,
+  },
+  badgeList: {
+    backgroundColor: "#DCFCE7", // Green 100
+  },
+  badgeText: {
+    fontFamily: fonts.medium,
+    fontSize: 11,
+    color: colors.secondary,
+    letterSpacing: 0.5,
+  },
+  timestamp: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: colors.tertiary,
+    marginLeft: "auto",
+  },
+  content: {
+    flex: 1,
+  },
+  contentText: {
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    color: colors.primary,
+    lineHeight: 24,
+  },
+});
